@@ -1,0 +1,503 @@
+{
+  "title": "crabgent architecture atlas",
+  "tagline": "A functional map of the runtime, with crates as implementation evidence.",
+  "principles": [
+    "Kernel owns the run loop. Transport stays outside.",
+    "Policy gates actions before side effects.",
+    "Hooks compose behavior without becoming a second kernel.",
+    "Crates implement capabilities; capabilities are the navigation surface."
+  ],
+  "entryMap": "overview",
+  "maps": [
+    {
+      "id": "overview",
+      "title": "Runtime Spine",
+      "subtitle": "Follow one user turn from channel ingress to LLM, tools, memory, outbound delivery, and lifecycle signals.",
+      "legend": "Solid lines are runtime flow. Amber lines are policy or trust boundaries. Green lines are persistence and recall.",
+      "nodes": [
+        {
+          "id": "ingress",
+          "label": "Ingress",
+          "kind": "boundary",
+          "x": 60,
+          "y": 150,
+          "w": 150,
+          "h": 70,
+          "summary": "Slack, Matrix, Telegram, MCP, or direct callers turn outside events into typed crabgent inputs.",
+          "crates": ["crabgent-channel", "crabgent-channel-slack", "crabgent-channel-matrix", "crabgent-channel-telegram", "crabgent-mcp-server"],
+          "surface": ["InboundEvent", "ChannelInbox", "KernelChannelInbox", "McpSessionRegistry"],
+          "targetMap": "channels"
+        },
+        {
+          "id": "identity",
+          "label": "Subject + Session",
+          "kind": "state",
+          "x": 275,
+          "y": 150,
+          "w": 170,
+          "h": 70,
+          "summary": "Subject carries auth identity, Owner carries persistence identity, and Session gives a conversation-shaped history.",
+          "crates": ["crabgent-core", "crabgent-session", "crabgent-store", "crabgent-tool-session"],
+          "surface": ["Subject", "Owner", "ThreadId", "SessionManager", "SessionPersistHook"],
+          "targetMap": "context"
+        },
+        {
+          "id": "policy",
+          "label": "Policy Gate",
+          "kind": "control",
+          "x": 515,
+          "y": 150,
+          "w": 150,
+          "h": 70,
+          "summary": "Every meaningful side-effect crosses Action and PolicyHook before it runs.",
+          "crates": ["crabgent-core"],
+          "surface": ["Action", "PolicyHook", "StrictPolicy", "DenyAllPolicy", "AllowAllPolicy"],
+          "targetMap": "policy-hooks"
+        },
+        {
+          "id": "hooks",
+          "label": "Hook Chain",
+          "kind": "control",
+          "x": 735,
+          "y": 150,
+          "w": 155,
+          "h": 70,
+          "summary": "FIFO hooks enrich, observe, replace, deny, compact, inject, log, or cancel without becoming transport code.",
+          "crates": ["crabgent-core", "crabgent-calendar", "crabgent-hook-compact", "crabgent-hook-inject", "crabgent-hook-log", "crabgent-thinking"],
+          "surface": ["Hook", "HookChain", "Decision", "RunCtx", "TimeHintHook", "ThinkingHook"],
+          "targetMap": "policy-hooks"
+        },
+        {
+          "id": "provider",
+          "label": "Provider + Model",
+          "kind": "llm",
+          "x": 965,
+          "y": 150,
+          "w": 170,
+          "h": 70,
+          "summary": "Provider-neutral requests are reshaped into Anthropic, OpenAI, Google, STT, image-generation, or embedding calls.",
+          "crates": ["crabgent-core", "crabgent-provider-anthropic", "crabgent-provider-openai", "crabgent-provider-google", "crabgent-provider-transport", "crabgent-provider-elevenlabs", "crabgent-embedding-fastembed"],
+          "surface": ["Provider", "ModelRegistry", "ModelInfo", "ModelCapabilities", "AuthStrategy", "WireFormat"],
+          "targetMap": "providers"
+        },
+        {
+          "id": "tool-loop",
+          "label": "Tool Loop",
+          "kind": "tool",
+          "x": 735,
+          "y": 335,
+          "w": 170,
+          "h": 70,
+          "summary": "Tool calls are parsed, policy-gated, executed with ToolCtx, observed by hooks, and optionally compacted or cached.",
+          "crates": ["crabgent-core", "crabgent-tool-memory", "crabgent-tool-calendar", "crabgent-tool-cron", "crabgent-tool-task", "crabgent-tool-models", "crabgent-tool-cache", "crabgent-channel"],
+          "surface": ["Tool", "ToolCtx", "ToolResult", "Args", "Op", "TOOL_NAME"],
+          "targetMap": "tools"
+        },
+        {
+          "id": "memory",
+          "label": "Memory + Recall",
+          "kind": "state",
+          "x": 500,
+          "y": 335,
+          "w": 170,
+          "h": 70,
+          "summary": "Memory classes, recall strategies, embedding-aware search, lifecycle tools, and consolidation turn history into useful context.",
+          "crates": ["crabgent-memory", "crabgent-tool-memory", "crabgent-memory-consolidation", "crabgent-tool-consolidation", "crabgent-store", "crabgent-store-sqlite", "crabgent-store-postgres"],
+          "surface": ["MemoryClass", "RecallStrategy", "MemoryDoc", "MemoryScope", "ConsolidationRunner"],
+          "targetMap": "memory"
+        },
+        {
+          "id": "scheduling",
+          "label": "Calendar / Cron / Task",
+          "kind": "runtime",
+          "x": 275,
+          "y": 335,
+          "w": 170,
+          "h": 70,
+          "summary": "Time hints, scheduled jobs, and background tasks create controlled work beyond one immediate LLM response.",
+          "crates": ["crabgent-calendar", "crabgent-tool-calendar", "crabgent-cron", "crabgent-tool-cron", "crabgent-task", "crabgent-tool-task"],
+          "surface": ["TimeHintHook", "HolidayProvider", "CronScheduler", "CronJob", "TaskExecutor", "TaskTool"],
+          "targetMap": "scheduling"
+        },
+        {
+          "id": "outbound",
+          "label": "Outbound + Progress",
+          "kind": "boundary",
+          "x": 965,
+          "y": 335,
+          "w": 170,
+          "h": 70,
+          "summary": "Replies, channel side-effects, notifications, reactions, typing, and reasoning progress leave the kernel through typed sinks.",
+          "crates": ["crabgent-channel", "crabgent-channel-slack", "crabgent-channel-matrix", "crabgent-channel-telegram", "crabgent-thinking"],
+          "surface": ["ChannelSink", "ChannelRouter", "MessageRef", "TypingIndicator", "ProgressSink"],
+          "targetMap": "channels"
+        },
+        {
+          "id": "stores",
+          "label": "Stores",
+          "kind": "state",
+          "x": 60,
+          "y": 335,
+          "w": 150,
+          "h": 70,
+          "summary": "In-memory, SQLite, and Postgres backends persist sessions, memory, cron, and tool-cache state behind traits.",
+          "crates": ["crabgent-store", "crabgent-store-sqlite", "crabgent-store-postgres"],
+          "surface": ["SessionStore", "MemoryStore", "CronStore", "ToolCacheStore"],
+          "targetMap": "stores"
+        },
+        {
+          "id": "media",
+          "label": "Vision + Audio",
+          "kind": "boundary",
+          "x": 60,
+          "y": 505,
+          "w": 170,
+          "h": 70,
+          "summary": "Channel-side media validation keeps bytes typed before providers reshape them for model-specific wire formats.",
+          "crates": ["crabgent-core", "crabgent-channel", "crabgent-provider-openai", "crabgent-provider-anthropic", "crabgent-provider-elevenlabs"],
+          "surface": ["ImagePayload", "AudioPayload", "ImageValidator", "AudioValidator", "SttProvider"],
+          "targetMap": "media"
+        },
+        {
+          "id": "mcp",
+          "label": "MCP Bridge",
+          "kind": "boundary",
+          "x": 275,
+          "y": 505,
+          "w": 170,
+          "h": 70,
+          "summary": "MCP client imports remote tools; MCP server exports crabgent tools and chat through JSON-RPC sessions.",
+          "crates": ["crabgent-mcp-client", "crabgent-mcp-server", "crabgent-core"],
+          "surface": ["McpClientBuilder", "McpServer", "ToolFilter", "chat"],
+          "targetMap": "mcp"
+        },
+        {
+          "id": "lifecycle",
+          "label": "Cancel + Shutdown",
+          "kind": "runtime",
+          "x": 500,
+          "y": 505,
+          "w": 170,
+          "h": 70,
+          "summary": "Stop-patterns, hook cancellation, external cancellation, task drains, and graceful shutdown converge on explicit cancellation roots.",
+          "crates": ["crabgent-core", "crabgent-channel", "crabgent-cron", "crabgent-task", "crabgent-hook-log"],
+          "surface": ["CancelReason", "CancellationToken", "Kernel::shutdown", "ChannelInbox::shutdown"],
+          "targetMap": "lifecycle"
+        }
+      ],
+      "edges": [
+        {"from": "ingress", "to": "identity", "label": "typed event", "kind": "flow"},
+        {"from": "identity", "to": "policy", "label": "subject + owner", "kind": "policy"},
+        {"from": "policy", "to": "hooks", "label": "allowed request", "kind": "policy"},
+        {"from": "hooks", "to": "provider", "label": "LlmRequest", "kind": "flow"},
+        {"from": "provider", "to": "tool-loop", "label": "tool call", "kind": "tool"},
+        {"from": "tool-loop", "to": "provider", "label": "tool result", "kind": "tool"},
+        {"from": "tool-loop", "to": "memory", "label": "store/search", "kind": "state"},
+        {"from": "memory", "to": "identity", "label": "recall context", "kind": "state"},
+        {"from": "scheduling", "to": "tool-loop", "label": "deferred work", "kind": "runtime"},
+        {"from": "stores", "to": "identity", "label": "history", "kind": "state"},
+        {"from": "stores", "to": "memory", "label": "memory docs", "kind": "state"},
+        {"from": "provider", "to": "outbound", "label": "assistant text", "kind": "flow"},
+        {"from": "tool-loop", "to": "outbound", "label": "channel tools", "kind": "tool"},
+        {"from": "media", "to": "provider", "label": "typed payload", "kind": "flow"},
+        {"from": "mcp", "to": "tool-loop", "label": "proxied tools", "kind": "tool"},
+        {"from": "lifecycle", "to": "hooks", "label": "cancel reason", "kind": "runtime"}
+      ]
+    },
+    {
+      "id": "channels",
+      "title": "Channel Boundary",
+      "subtitle": "Adapters normalize outside conversations into safe kernel runs, then route typed outbound effects back to the right transport.",
+      "legend": "Ingress hardening happens before kernel context is built. Outbound is tool-driven and policy-gated.",
+      "nodes": [
+        {"id": "slack", "label": "Slack", "kind": "adapter", "x": 55, "y": 85, "w": 130, "h": 60, "summary": "Socket Mode plus Web API: threads, uploads, reactions, reads, progress.", "crates": ["crabgent-channel-slack"]},
+        {"id": "matrix", "label": "Matrix", "kind": "adapter", "x": 55, "y": 190, "w": 130, "h": 60, "summary": "Plaintext sync, room threading, reactions, edit/delete/upload/read.", "crates": ["crabgent-channel-matrix"]},
+        {"id": "telegram", "label": "Telegram", "kind": "adapter", "x": 55, "y": 295, "w": 130, "h": 60, "summary": "Long polling, direct conversations, voice/audio, reactions, HTML output hint.", "crates": ["crabgent-channel-telegram"]},
+        {"id": "event", "label": "InboundEvent", "kind": "boundary", "x": 260, "y": 180, "w": 150, "h": 75, "summary": "Channel-agnostic body, participants, channel kind, thread root, timestamps, and attrs.", "crates": ["crabgent-channel"], "surface": ["InboundEvent", "InboundBody", "InboundParticipant"]},
+        {"id": "sanitize", "label": "Sanitize + Persona Boundary", "kind": "control", "x": 485, "y": 180, "w": 190, "h": 75, "summary": "Inbound text is length-capped, sanitized, and framed before it becomes LLM-facing content.", "crates": ["crabgent-channel", "crabgent-core"], "surface": ["sanitize_for_prompt", "INBOUND_BODY_MAX_BYTES"]},
+        {"id": "inbox", "label": "KernelChannelInbox", "kind": "runtime", "x": 750, "y": 180, "w": 180, "h": 75, "summary": "Builds RunRequest, resolves session, applies stop patterns, dispatches into Kernel.", "crates": ["crabgent-channel", "crabgent-core", "crabgent-session"], "surface": ["ChannelInbox", "KernelChannelInbox", "StopPatternMatcher"]},
+        {"id": "sink", "label": "ChannelSink + Router", "kind": "boundary", "x": 750, "y": 380, "w": 180, "h": 75, "summary": "Routes send, read, react, edit, delete, upload, notify_user to registered channel implementations.", "crates": ["crabgent-channel"], "surface": ["ChannelSink", "ChannelRouter", "MessageRef"]},
+        {"id": "tools", "label": "Channel Tools", "kind": "tool", "x": 485, "y": 380, "w": 190, "h": 75, "summary": "LLM-facing channel tools create outbound effects under policy.", "crates": ["crabgent-channel"], "surface": ["channel_send", "channel_read", "channel_react", "channel_notify_user"]},
+        {"id": "progress", "label": "Typing + Progress", "kind": "runtime", "x": 260, "y": 380, "w": 150, "h": 75, "summary": "Transport-specific UX signals consume reasoning and tool-progress events without changing the run result.", "crates": ["crabgent-thinking", "crabgent-channel-slack"], "surface": ["TypingIndicator", "ThinkingHook", "ProgressSink"]}
+      ],
+      "edges": [
+        {"from": "slack", "to": "event", "label": "normalize", "kind": "flow"},
+        {"from": "matrix", "to": "event", "label": "normalize", "kind": "flow"},
+        {"from": "telegram", "to": "event", "label": "normalize", "kind": "flow"},
+        {"from": "event", "to": "sanitize", "label": "untrusted text", "kind": "policy"},
+        {"from": "sanitize", "to": "inbox", "label": "safe message", "kind": "flow"},
+        {"from": "inbox", "to": "tools", "label": "run can call", "kind": "tool"},
+        {"from": "tools", "to": "sink", "label": "outbound effect", "kind": "tool"},
+        {"from": "sink", "to": "slack", "label": "send/read/react", "kind": "flow"},
+        {"from": "sink", "to": "matrix", "label": "send/read/react", "kind": "flow"},
+        {"from": "sink", "to": "telegram", "label": "send/read/react", "kind": "flow"},
+        {"from": "inbox", "to": "progress", "label": "events", "kind": "runtime"}
+      ]
+    },
+    {
+      "id": "context",
+      "title": "Context, Identity, Session",
+      "subtitle": "Auth identity, persistence identity, conversation state, and model overrides stay separate until a RunRequest is built.",
+      "legend": "Identity split is central: Subject is not Owner, and MemoryScope is the scope vector.",
+      "nodes": [
+        {"id": "subject", "label": "Subject", "kind": "control", "x": 75, "y": 125, "w": 150, "h": 70, "summary": "Auth-facing actor with attrs used by policy and adapters.", "crates": ["crabgent-core"], "surface": ["Subject"]},
+        {"id": "owner", "label": "Owner", "kind": "state", "x": 75, "y": 285, "w": 150, "h": 70, "summary": "Persistence identity for sessions, memory, cron, and scoped data.", "crates": ["crabgent-core"], "surface": ["Owner"]},
+        {"id": "scope", "label": "MemoryScope", "kind": "state", "x": 285, "y": 285, "w": 165, "h": 70, "summary": "Single reusable scope vector across memory and cron filtering.", "crates": ["crabgent-core", "crabgent-memory", "crabgent-cron"], "surface": ["MemoryScope"]},
+        {"id": "session", "label": "SessionManager", "kind": "runtime", "x": 515, "y": 125, "w": 175, "h": 70, "summary": "Finds or creates the conversation session and prepends durable history.", "crates": ["crabgent-session", "crabgent-store"], "surface": ["SessionManager", "SessionStore", "SessionId"]},
+        {"id": "persist", "label": "SessionPersistHook", "kind": "control", "x": 515, "y": 285, "w": 175, "h": 70, "summary": "Persists canonical run messages, including compacted views and channel outbound fan-out.", "crates": ["crabgent-session"], "surface": ["SessionPersistHook"]},
+        {"id": "model", "label": "Model Override", "kind": "llm", "x": 750, "y": 125, "w": 180, "h": 70, "summary": "Session and global model overrides are stored and validated through the model tool surface.", "crates": ["crabgent-tool-models", "crabgent-store", "crabgent-command-model"], "surface": ["ModelRegistryTool", "session.model_override"]},
+        {"id": "runrequest", "label": "RunRequest", "kind": "runtime", "x": 750, "y": 285, "w": 180, "h": 70, "summary": "Kernel-facing request carries messages, model, subject, cancel handles, and runtime metadata.", "crates": ["crabgent-core", "crabgent-channel"], "surface": ["RunRequest", "LlmRequest", "RunCtx"]}
+      ],
+      "edges": [
+        {"from": "subject", "to": "session", "label": "auth attrs", "kind": "flow"},
+        {"from": "owner", "to": "scope", "label": "scope owner", "kind": "state"},
+        {"from": "scope", "to": "session", "label": "conversation scope", "kind": "state"},
+        {"from": "session", "to": "runrequest", "label": "history", "kind": "flow"},
+        {"from": "model", "to": "runrequest", "label": "selected model", "kind": "llm"},
+        {"from": "runrequest", "to": "persist", "label": "canonical messages", "kind": "state"},
+        {"from": "persist", "to": "session", "label": "save", "kind": "state"}
+      ]
+    },
+    {
+      "id": "policy-hooks",
+      "title": "Policy And Hook Mesh",
+      "subtitle": "Policy decides whether a side effect may happen. Hooks enrich and observe the run while respecting explicit cancellation.",
+      "legend": "Deny is terminal. Replace mutates the typed value. Continue keeps the chain moving.",
+      "nodes": [
+        {"id": "action", "label": "Action", "kind": "policy", "x": 70, "y": 165, "w": 145, "h": 70, "summary": "Typed description of the side effect or query being requested.", "crates": ["crabgent-core"], "surface": ["Action"]},
+        {"id": "policy", "label": "PolicyHook", "kind": "policy", "x": 285, "y": 165, "w": 165, "h": 70, "summary": "Fail-closed policy surface. KernelBuilder requires one before build.", "crates": ["crabgent-core"], "surface": ["PolicyHook", "StrictPolicy", "DenyAllPolicy"]},
+        {"id": "chain", "label": "HookChain", "kind": "control", "x": 520, "y": 165, "w": 165, "h": 70, "summary": "FIFO composition over before_llm, after_llm, tool, event, and shutdown hook points.", "crates": ["crabgent-core"], "surface": ["Hook", "HookChain", "Decision"]},
+        {"id": "time", "label": "TimeHint", "kind": "control", "x": 760, "y": 75, "w": 145, "h": 60, "summary": "Adds current time, weekday, timezone, and holiday hints to system prompt.", "crates": ["crabgent-calendar"], "surface": ["TimeHintHook"]},
+        {"id": "compact", "label": "Compact", "kind": "control", "x": 760, "y": 165, "w": 145, "h": 60, "summary": "Token-aware semantic compaction with continuity, archive-before-compact, and per-run serialization.", "crates": ["crabgent-hook-compact"], "surface": ["CompactHook"]},
+        {"id": "inject", "label": "Inject", "kind": "control", "x": 760, "y": 255, "w": 145, "h": 60, "summary": "Runtime message injection keyed by RunId.", "crates": ["crabgent-hook-inject"], "surface": ["InjectHook"]},
+        {"id": "observe", "label": "Log + Thinking", "kind": "runtime", "x": 520, "y": 360, "w": 165, "h": 70, "summary": "Events and reasoning deltas become logging and user-visible progress signals.", "crates": ["crabgent-hook-log", "crabgent-thinking"], "surface": ["Event", "ThinkingHook"]},
+        {"id": "cancel", "label": "Cancel Root", "kind": "runtime", "x": 285, "y": 360, "w": 165, "h": 70, "summary": "Hooks, stop patterns, or external callers cancel through RunCtx and carry CancelReason.", "crates": ["crabgent-core", "crabgent-channel"], "surface": ["RunCtx", "CancelReason"]},
+        {"id": "kernel", "label": "Kernel Loop", "kind": "runtime", "x": 70, "y": 360, "w": 145, "h": 70, "summary": "The only place that turns policy, hooks, provider calls, and tool loops into a run result.", "crates": ["crabgent-core"], "surface": ["Kernel", "run", "run_streaming"]}
+      ],
+      "edges": [
+        {"from": "action", "to": "policy", "label": "gate", "kind": "policy"},
+        {"from": "policy", "to": "chain", "label": "allowed", "kind": "policy"},
+        {"from": "chain", "to": "time", "label": "before_llm", "kind": "flow"},
+        {"from": "chain", "to": "compact", "label": "pre_compact", "kind": "flow"},
+        {"from": "chain", "to": "inject", "label": "replace/inject", "kind": "flow"},
+        {"from": "chain", "to": "observe", "label": "events", "kind": "runtime"},
+        {"from": "chain", "to": "cancel", "label": "ctx.cancel", "kind": "runtime"},
+        {"from": "cancel", "to": "kernel", "label": "stop cleanly", "kind": "runtime"},
+        {"from": "kernel", "to": "action", "label": "next side effect", "kind": "flow"}
+      ]
+    },
+    {
+      "id": "providers",
+      "title": "Provider, Model, Media",
+      "subtitle": "The kernel speaks provider-neutral types. Provider crates own model discovery, wire shape, auth, retries, and model-specific media reshaping.",
+      "legend": "Model capabilities are the guardrail between a RunRequest and a provider wire body.",
+      "nodes": [
+        {"id": "registry", "label": "ModelRegistry", "kind": "llm", "x": 70, "y": 145, "w": 160, "h": 70, "summary": "Catalog of ModelInfo and ModelCapabilities used for validation and overrides.", "crates": ["crabgent-core", "crabgent-tool-models"], "surface": ["ModelRegistry", "ModelInfo", "ModelCapabilities"]},
+        {"id": "request", "label": "LlmRequest", "kind": "runtime", "x": 300, "y": 145, "w": 150, "h": 70, "summary": "Provider-neutral message, model, tool, image/audio, and reasoning request shape.", "crates": ["crabgent-core"], "surface": ["LlmRequest"]},
+        {"id": "provider", "label": "Provider Trait", "kind": "llm", "x": 520, "y": 145, "w": 155, "h": 70, "summary": "Common complete, stream, capabilities, and models surface.", "crates": ["crabgent-core"], "surface": ["Provider", "ProviderCapabilities"]},
+        {"id": "transport", "label": "Transport Helpers", "kind": "boundary", "x": 745, "y": 145, "w": 165, "h": 70, "summary": "Cancellation-aware HTTP retries, auth classification, capped body reads.", "crates": ["crabgent-provider-transport"], "surface": ["retry_after", "read_body_capped"]},
+        {"id": "anthropic", "label": "Anthropic", "kind": "adapter", "x": 285, "y": 330, "w": 145, "h": 60, "summary": "Streaming, prompt caching, model discovery, and Anthropic wire format.", "crates": ["crabgent-provider-anthropic"]},
+        {"id": "openai", "label": "OpenAI", "kind": "adapter", "x": 480, "y": 330, "w": 145, "h": 60, "summary": "Chat Completions, Responses/Codex OAuth, prompt caching, STT.", "crates": ["crabgent-provider-openai"]},
+        {"id": "google", "label": "Google", "kind": "adapter", "x": 675, "y": 330, "w": 145, "h": 60, "summary": "Gemini discovery, generateContent, image-generation support.", "crates": ["crabgent-provider-google"]},
+        {"id": "stt", "label": "STT + Embedding", "kind": "llm", "x": 70, "y": 330, "w": 165, "h": 60, "summary": "Speech-to-text and local embedding provider traits extend the same provider-neutral pattern.", "crates": ["crabgent-core", "crabgent-provider-elevenlabs", "crabgent-embedding-fastembed"], "surface": ["SttProvider", "EmbeddingProvider"]}
+      ],
+      "edges": [
+        {"from": "registry", "to": "request", "label": "validated model", "kind": "llm"},
+        {"from": "request", "to": "provider", "label": "complete/stream", "kind": "flow"},
+        {"from": "provider", "to": "transport", "label": "HTTP", "kind": "boundary"},
+        {"from": "provider", "to": "anthropic", "label": "wire reshape", "kind": "flow"},
+        {"from": "provider", "to": "openai", "label": "wire reshape", "kind": "flow"},
+        {"from": "provider", "to": "google", "label": "wire reshape", "kind": "flow"},
+        {"from": "request", "to": "stt", "label": "audio / embeddings", "kind": "llm"}
+      ]
+    },
+    {
+      "id": "tools",
+      "title": "Tool Execution Mesh",
+      "subtitle": "LLM tool calls become typed args, policy-gated actions, tool results, cached output, and sometimes channel or persistence effects.",
+      "legend": "Every tool has Args + Op + TOOL_NAME + schema + execute. ToolCtx carries trusted runtime context.",
+      "nodes": [
+        {"id": "call", "label": "ToolCall", "kind": "tool", "x": 65, "y": 175, "w": 135, "h": 65, "summary": "Provider-originated tool name and JSON args.", "crates": ["crabgent-core"], "surface": ["ToolCall"]},
+        {"id": "parse", "label": "Args + Op", "kind": "tool", "x": 260, "y": 175, "w": 145, "h": 65, "summary": "Serde parses one operation enum and validates required fields.", "crates": ["crabgent-tool-memory", "crabgent-tool-cron", "crabgent-tool-task", "crabgent-tool-models"], "surface": ["Args", "Op"]},
+        {"id": "ctx", "label": "ToolCtx", "kind": "runtime", "x": 465, "y": 175, "w": 145, "h": 65, "summary": "Subject, session, tool roots, current model context, and policy-visible metadata.", "crates": ["crabgent-core"], "surface": ["ToolCtx"]},
+        {"id": "gate", "label": "Action Gate", "kind": "policy", "x": 670, "y": 175, "w": 145, "h": 65, "summary": "Tool-specific Action goes through PolicyHook before execution.", "crates": ["crabgent-core"], "surface": ["gate_tool_action", "Action"]},
+        {"id": "result", "label": "ToolResult", "kind": "tool", "x": 875, "y": 175, "w": 145, "h": 65, "summary": "Result can be normal, error-shaped, cache reference, or channel outbound signal.", "crates": ["crabgent-core"], "surface": ["ToolResult"]},
+        {"id": "memory", "label": "Memory Tools", "kind": "state", "x": 90, "y": 350, "w": 155, "h": 60, "summary": "Search, store, get, delete, archive, unarchive, expiry, forget.", "crates": ["crabgent-tool-memory"]},
+        {"id": "ops", "label": "Calendar / Cron / Task", "kind": "runtime", "x": 300, "y": 350, "w": 180, "h": 60, "summary": "Date operations, cron CRUD, background task create/list/get/cancel.", "crates": ["crabgent-tool-calendar", "crabgent-tool-cron", "crabgent-tool-task"]},
+        {"id": "model", "label": "Model Tool", "kind": "llm", "x": 535, "y": 350, "w": 155, "h": 60, "summary": "List, get, current, set/clear session override, set/clear global override.", "crates": ["crabgent-tool-models"]},
+        {"id": "channel", "label": "Channel Tools", "kind": "boundary", "x": 745, "y": 350, "w": 155, "h": 60, "summary": "Send, read, react, edit, delete, upload, notify_user.", "crates": ["crabgent-channel"]},
+        {"id": "cache", "label": "Tool Cache", "kind": "control", "x": 955, "y": 350, "w": 145, "h": 60, "summary": "Large tool output is replaced with cache pointers and read back by cache_read.", "crates": ["crabgent-tool-cache"], "surface": ["ToolCacheHook", "CacheReadTool"]}
+      ],
+      "edges": [
+        {"from": "call", "to": "parse", "label": "JSON args", "kind": "tool"},
+        {"from": "parse", "to": "ctx", "label": "typed args", "kind": "tool"},
+        {"from": "ctx", "to": "gate", "label": "subject", "kind": "policy"},
+        {"from": "gate", "to": "result", "label": "execute", "kind": "tool"},
+        {"from": "parse", "to": "memory", "label": "op family", "kind": "state"},
+        {"from": "parse", "to": "ops", "label": "op family", "kind": "runtime"},
+        {"from": "parse", "to": "model", "label": "op family", "kind": "llm"},
+        {"from": "parse", "to": "channel", "label": "op family", "kind": "boundary"},
+        {"from": "result", "to": "cache", "label": "large output", "kind": "state"}
+      ]
+    },
+    {
+      "id": "memory",
+      "title": "Memory Lifecycle",
+      "subtitle": "Memory is not one bag of strings. Class, scope, recall strategy, embedding, lifecycle, consolidation, and store backend all stay explicit.",
+      "legend": "Semantic category is MemoryClass. Conversation kind is not class.",
+      "nodes": [
+        {"id": "classes", "label": "MemoryClass", "kind": "state", "x": 70, "y": 110, "w": 165, "h": 70, "summary": "Semantic, episodic, recency, notes, user_profile, skill, tools.", "crates": ["crabgent-memory", "crabgent-core"], "surface": ["MemoryClass"]},
+        {"id": "scope", "label": "MemoryScope", "kind": "state", "x": 305, "y": 110, "w": 165, "h": 70, "summary": "Owner, channel, thread scope reused across memory and cron.", "crates": ["crabgent-core"]},
+        {"id": "recall", "label": "Recall Strategy", "kind": "runtime", "x": 540, "y": 110, "w": 175, "h": 70, "summary": "Blended FTS, importance, recency decay, and embeddings produce ranked recall.", "crates": ["crabgent-memory"], "surface": ["RecallStrategy", "DecayPolicy", "BlendWeights"]},
+        {"id": "embed", "label": "Embeddings", "kind": "llm", "x": 785, "y": 110, "w": 160, "h": 70, "summary": "Optional provider-backed vectors augment FTS in tool and store paths.", "crates": ["crabgent-core", "crabgent-embedding-fastembed"], "surface": ["EmbeddingProvider"]},
+        {"id": "tool", "label": "Memory Tool", "kind": "tool", "x": 70, "y": 305, "w": 165, "h": 70, "summary": "LLM-facing search/store/get/delete/archive/unarchive/extend/forget lifecycle.", "crates": ["crabgent-tool-memory"], "surface": ["MemoryTool"]},
+        {"id": "store", "label": "MemoryStore", "kind": "state", "x": 305, "y": 305, "w": 165, "h": 70, "summary": "In-memory, SQLite, and Postgres implement the same memory persistence contract.", "crates": ["crabgent-store", "crabgent-store-sqlite", "crabgent-store-postgres"], "surface": ["MemoryStore"]},
+        {"id": "consolidate", "label": "Consolidation", "kind": "runtime", "x": 540, "y": 305, "w": 175, "h": 70, "summary": "Extraction, deduplication, conflict resolution, stale cleanup, audit, checkpoint.", "crates": ["crabgent-memory-consolidation", "crabgent-tool-consolidation"], "surface": ["ConsolidationRunner"]},
+        {"id": "persist", "label": "Persist Hook", "kind": "control", "x": 785, "y": 305, "w": 160, "h": 70, "summary": "Optional hook turns run messages into memory records under policy and scope.", "crates": ["crabgent-memory"], "surface": ["MemoryPersistHook"]}
+      ],
+      "edges": [
+        {"from": "classes", "to": "recall", "label": "strategy", "kind": "state"},
+        {"from": "scope", "to": "recall", "label": "filter", "kind": "state"},
+        {"from": "embed", "to": "recall", "label": "vector", "kind": "llm"},
+        {"from": "tool", "to": "store", "label": "CRUD", "kind": "tool"},
+        {"from": "store", "to": "recall", "label": "ranked hits", "kind": "state"},
+        {"from": "store", "to": "consolidate", "label": "candidate set", "kind": "state"},
+        {"from": "consolidate", "to": "store", "label": "cleaned facts", "kind": "state"},
+        {"from": "persist", "to": "store", "label": "new records", "kind": "state"}
+      ]
+    },
+    {
+      "id": "scheduling",
+      "title": "Time, Jobs, Tasks",
+      "subtitle": "Temporal context and deferred execution are explicit surfaces, not hidden loops inside the kernel.",
+      "legend": "Calendar answers time questions. Cron schedules prompts. Task runs controlled background work.",
+      "nodes": [
+        {"id": "timehint", "label": "TimeHintHook", "kind": "control", "x": 80, "y": 135, "w": 170, "h": 70, "summary": "Injects now, weekday, timezone, holiday, and authoring-time guidance.", "crates": ["crabgent-calendar"], "surface": ["TimeHintHook", "TimeHintConfig"]},
+        {"id": "calendar", "label": "Calendar Tool", "kind": "tool", "x": 330, "y": 135, "w": 170, "h": 70, "summary": "Holiday list/next/check, days_between, date arithmetic, weekday info.", "crates": ["crabgent-tool-calendar", "crabgent-calendar"], "surface": ["CalendarTool", "HolidayProvider"]},
+        {"id": "cron", "label": "Cron Tool", "kind": "tool", "x": 80, "y": 325, "w": 170, "h": 70, "summary": "LLM-facing create/list/get/update/delete/pause/resume schedule surface.", "crates": ["crabgent-tool-cron", "crabgent-cron"], "surface": ["CronTool"]},
+        {"id": "scheduler", "label": "CronScheduler", "kind": "runtime", "x": 330, "y": 325, "w": 170, "h": 70, "summary": "Claims due jobs, runs prompts through executor, drains on shutdown.", "crates": ["crabgent-cron"], "surface": ["CronScheduler", "CronJob"]},
+        {"id": "tasktool", "label": "Task Tool", "kind": "tool", "x": 595, "y": 135, "w": 170, "h": 70, "summary": "Create, list, get, cancel with context injection and optional blocking wait.", "crates": ["crabgent-tool-task"], "surface": ["TaskTool"]},
+        {"id": "executor", "label": "TaskExecutor", "kind": "runtime", "x": 595, "y": 325, "w": 170, "h": 70, "summary": "Depth cap, parallel cap, cancellation propagation, parent_task_id propagation.", "crates": ["crabgent-task"], "surface": ["TaskExecutor", "TaskRequest"]},
+        {"id": "store", "label": "Scoped Store", "kind": "state", "x": 855, "y": 230, "w": 165, "h": 70, "summary": "Cron and task metadata persist behind stores using Owner/MemoryScope vocabulary.", "crates": ["crabgent-store", "crabgent-store-sqlite", "crabgent-store-postgres"], "surface": ["CronStore", "TaskStore"]}
+      ],
+      "edges": [
+        {"from": "timehint", "to": "calendar", "label": "time facts", "kind": "flow"},
+        {"from": "calendar", "to": "cron", "label": "schedule math", "kind": "tool"},
+        {"from": "cron", "to": "scheduler", "label": "job CRUD", "kind": "tool"},
+        {"from": "scheduler", "to": "executor", "label": "run prompt", "kind": "runtime"},
+        {"from": "tasktool", "to": "executor", "label": "task request", "kind": "tool"},
+        {"from": "scheduler", "to": "store", "label": "jobs", "kind": "state"},
+        {"from": "executor", "to": "store", "label": "task state", "kind": "state"}
+      ]
+    },
+    {
+      "id": "mcp",
+      "title": "MCP Bridge",
+      "subtitle": "crabgent can consume remote MCP tools and expose its own tools plus chat through the MCP server surface.",
+      "legend": "Client and server are separate boundaries around the same tool/kernel concepts.",
+      "nodes": [
+        {"id": "remote", "label": "Remote MCP Server", "kind": "boundary", "x": 70, "y": 150, "w": 180, "h": 70, "summary": "External Streamable HTTP/SSE server with its own tool catalog."},
+        {"id": "client", "label": "MCP Client", "kind": "adapter", "x": 330, "y": 150, "w": 170, "h": 70, "summary": "Discovers tools, prefixes names, wraps remote calls as crabgent tools.", "crates": ["crabgent-mcp-client"], "surface": ["McpClientBuilder", "McpServerConfig"]},
+        {"id": "kerneltools", "label": "Kernel Tools", "kind": "tool", "x": 585, "y": 150, "w": 170, "h": 70, "summary": "Registered Tool trait objects exposed to providers and optionally MCP server.", "crates": ["crabgent-core"], "surface": ["Tool", "Kernel::tools"]},
+        {"id": "jsonrpc", "label": "JSON-RPC Dispatch", "kind": "boundary", "x": 70, "y": 340, "w": 180, "h": 70, "summary": "Bearer-authenticated MCP server request handling and SSE helpers.", "crates": ["crabgent-mcp-server"], "surface": ["handle_json_rpc", "ToolFilter"]},
+        {"id": "sessions", "label": "MCP Sessions", "kind": "state", "x": 330, "y": 340, "w": 170, "h": 70, "summary": "UUIDv7 session registry, bounded LRU, per-session cancellation token.", "crates": ["crabgent-mcp-server"], "surface": ["McpSessionRegistry", "McpSessionEntry"]},
+        {"id": "chat", "label": "Native Chat Tool", "kind": "runtime", "x": 585, "y": 340, "w": 170, "h": 70, "summary": "MCP chat dispatch builds a RunRequest and calls the kernel with session cancellation.", "crates": ["crabgent-mcp-server", "crabgent-core"], "surface": ["chat", "RunRequest"]},
+        {"id": "kernel", "label": "Kernel", "kind": "runtime", "x": 835, "y": 245, "w": 150, "h": 70, "summary": "Shared execution core for chat and tool calls.", "crates": ["crabgent-core"], "surface": ["Kernel"]}
+      ],
+      "edges": [
+        {"from": "remote", "to": "client", "label": "discover/call", "kind": "boundary"},
+        {"from": "client", "to": "kerneltools", "label": "proxied Tool", "kind": "tool"},
+        {"from": "jsonrpc", "to": "sessions", "label": "session id", "kind": "state"},
+        {"from": "jsonrpc", "to": "kerneltools", "label": "tools/list call", "kind": "tool"},
+        {"from": "sessions", "to": "chat", "label": "entry + token", "kind": "state"},
+        {"from": "chat", "to": "kernel", "label": "RunRequest", "kind": "runtime"},
+        {"from": "kerneltools", "to": "kernel", "label": "execute", "kind": "tool"}
+      ]
+    },
+    {
+      "id": "media",
+      "title": "Vision And Audio",
+      "subtitle": "Bytes become typed payloads at channel boundaries. Providers do model-specific wire reshaping without revalidating trust-boundary decisions.",
+      "legend": "Validation belongs near ingress. Base64 and provider-specific layout are wire details.",
+      "nodes": [
+        {"id": "channel", "label": "Channel Files", "kind": "boundary", "x": 70, "y": 160, "w": 160, "h": 70, "summary": "Adapters receive files, images, voice, and audio from outside transports.", "crates": ["crabgent-channel-slack", "crabgent-channel-matrix", "crabgent-channel-telegram"]},
+        {"id": "validate", "label": "Validate + Cache", "kind": "control", "x": 300, "y": 160, "w": 180, "h": 70, "summary": "MIME, size, magic-byte, and filesystem storage happen before kernel/provider handoff.", "crates": ["crabgent-channel", "crabgent-core"], "surface": ["ImageValidator", "AudioValidator", "FileSystemImageStore"]},
+        {"id": "payload", "label": "Typed Payloads", "kind": "runtime", "x": 550, "y": 160, "w": 170, "h": 70, "summary": "ImagePayload, AudioPayload, and FilePayload travel as typed content blocks.", "crates": ["crabgent-core"], "surface": ["ImagePayload", "AudioPayload", "ContentBlock"]},
+        {"id": "preflight", "label": "Capability Preflight", "kind": "policy", "x": 790, "y": 160, "w": 180, "h": 70, "summary": "Kernel checks model capability before sending vision/audio to a provider.", "crates": ["crabgent-core"], "surface": ["ModelCapabilities", "VisionUnsupported", "AudioUnsupported"]},
+        {"id": "reshape", "label": "Provider Reshape", "kind": "llm", "x": 300, "y": 350, "w": 180, "h": 70, "summary": "Providers map typed payloads into wire-specific multipart, JSON, or content arrays.", "crates": ["crabgent-provider-openai", "crabgent-provider-anthropic", "crabgent-provider-google"]},
+        {"id": "stt", "label": "Speech To Text", "kind": "llm", "x": 550, "y": 350, "w": 170, "h": 70, "summary": "STT inbox and providers turn audio into transcript-prefixed text.", "crates": ["crabgent-core", "crabgent-provider-elevenlabs", "crabgent-provider-openai"], "surface": ["SttProvider", "SttInbox"]},
+        {"id": "llm", "label": "LLM Request", "kind": "runtime", "x": 790, "y": 350, "w": 180, "h": 70, "summary": "Final model request receives typed media or transcript text depending on capability and path.", "crates": ["crabgent-core"], "surface": ["LlmRequest"]}
+      ],
+      "edges": [
+        {"from": "channel", "to": "validate", "label": "untrusted bytes", "kind": "policy"},
+        {"from": "validate", "to": "payload", "label": "typed payload", "kind": "flow"},
+        {"from": "payload", "to": "preflight", "label": "model check", "kind": "policy"},
+        {"from": "preflight", "to": "reshape", "label": "supported", "kind": "llm"},
+        {"from": "preflight", "to": "stt", "label": "transcribe", "kind": "llm"},
+        {"from": "reshape", "to": "llm", "label": "wire body", "kind": "flow"},
+        {"from": "stt", "to": "llm", "label": "transcript", "kind": "flow"}
+      ]
+    },
+    {
+      "id": "stores",
+      "title": "Persistence Backplane",
+      "subtitle": "Storage is a set of trait contracts. Runtime code depends on stores, not on a specific database.",
+      "legend": "In-memory is the default. SQLite is local durable. Postgres is opt-in and heavier.",
+      "nodes": [
+        {"id": "traits", "label": "Store Traits", "kind": "state", "x": 70, "y": 210, "w": 170, "h": 70, "summary": "SessionStore, MemoryStore, CronStore, ToolCacheStore and record types.", "crates": ["crabgent-store"], "surface": ["SessionStore", "MemoryStore", "CronStore", "ToolCacheStore"]},
+        {"id": "memory", "label": "Memory Records", "kind": "state", "x": 315, "y": 95, "w": 170, "h": 65, "summary": "FTS, importance, recency, embedding, archive, expiry.", "crates": ["crabgent-store"]},
+        {"id": "session", "label": "Session Records", "kind": "state", "x": 315, "y": 210, "w": 170, "h": 65, "summary": "Messages, thread/session ids, model override, search.", "crates": ["crabgent-store"]},
+        {"id": "cron", "label": "Cron + Cache", "kind": "state", "x": 315, "y": 325, "w": 170, "h": 65, "summary": "Scoped cron jobs and tool-output cache records.", "crates": ["crabgent-store"]},
+        {"id": "memorybackend", "label": "In-Memory", "kind": "adapter", "x": 565, "y": 95, "w": 160, "h": 65, "summary": "Fast default backend for tests and local simple deployments.", "crates": ["crabgent-store"]},
+        {"id": "sqlite", "label": "SQLite", "kind": "adapter", "x": 565, "y": 210, "w": 160, "h": 65, "summary": "Single-node durable backend with embedded migrations.", "crates": ["crabgent-store-sqlite"]},
+        {"id": "postgres", "label": "Postgres", "kind": "adapter", "x": 565, "y": 325, "w": 160, "h": 65, "summary": "Opt-in backend with native types, migrations, tsvector FTS and vector search.", "crates": ["crabgent-store-postgres"]},
+        {"id": "runtime", "label": "Runtime Users", "kind": "runtime", "x": 800, "y": 210, "w": 170, "h": 70, "summary": "Session manager, memory tools, cron scheduler, cache hook consume the trait contracts.", "crates": ["crabgent-session", "crabgent-memory", "crabgent-cron", "crabgent-tool-cache"]}
+      ],
+      "edges": [
+        {"from": "traits", "to": "memory", "label": "records", "kind": "state"},
+        {"from": "traits", "to": "session", "label": "records", "kind": "state"},
+        {"from": "traits", "to": "cron", "label": "records", "kind": "state"},
+        {"from": "memory", "to": "memorybackend", "label": "impl", "kind": "state"},
+        {"from": "session", "to": "sqlite", "label": "impl", "kind": "state"},
+        {"from": "cron", "to": "postgres", "label": "impl", "kind": "state"},
+        {"from": "memorybackend", "to": "runtime", "label": "trait object", "kind": "flow"},
+        {"from": "sqlite", "to": "runtime", "label": "trait object", "kind": "flow"},
+        {"from": "postgres", "to": "runtime", "label": "trait object", "kind": "flow"}
+      ]
+    },
+    {
+      "id": "lifecycle",
+      "title": "Cancellation And Shutdown",
+      "subtitle": "crabgent separates run cancellation, stop-pattern attribution, task drains, and kernel shutdown instead of hiding lifecycle in ad hoc booleans.",
+      "legend": "Cancellation has a root and a reason. Shutdown has a grace period and drain semantics.",
+      "nodes": [
+        {"id": "external", "label": "External Token", "kind": "boundary", "x": 70, "y": 135, "w": 170, "h": 70, "summary": "Caller-supplied cancellation token for run or stream.", "crates": ["crabgent-core"], "surface": ["RunRequest.cancel"]},
+        {"id": "stop", "label": "Stop Pattern", "kind": "boundary", "x": 70, "y": 310, "w": 170, "h": 70, "summary": "Channel messages like stop/cancel map to explicit CancelReason.", "crates": ["crabgent-channel"], "surface": ["StopPatternMatcher"]},
+        {"id": "ctx", "label": "RunCtx Cancel", "kind": "runtime", "x": 315, "y": 220, "w": 170, "h": 70, "summary": "Shared cancellation cell plus OnceLock reason visible to hooks and observers.", "crates": ["crabgent-core"], "surface": ["RunCtx", "CancelReason"]},
+        {"id": "kernel", "label": "Kernel Loop", "kind": "runtime", "x": 565, "y": 220, "w": 170, "h": 70, "summary": "Stops cooperatively and returns typed cancellation or shutdown errors.", "crates": ["crabgent-core"], "surface": ["KernelError::Cancelled", "KernelError::ShuttingDown"]},
+        {"id": "tasks", "label": "Task / Cron Drains", "kind": "runtime", "x": 810, "y": 135, "w": 180, "h": 70, "summary": "Background executors and schedulers obey cancellation and shutdown grace.", "crates": ["crabgent-task", "crabgent-cron"], "surface": ["TaskExecutor", "CronScheduler::shutdown"]},
+        {"id": "channel", "label": "Inbox Shutdown", "kind": "boundary", "x": 810, "y": 310, "w": 180, "h": 70, "summary": "ChannelInbox shutdown forwards grace through decorators to lifecycle-aware inboxes.", "crates": ["crabgent-channel"], "surface": ["ChannelInbox::shutdown", "InboxLifecycle"]},
+        {"id": "log", "label": "Shutdown Hooks", "kind": "control", "x": 565, "y": 410, "w": 170, "h": 70, "summary": "Hook notifications distinguish normal drain, cancelled task, and panic during shutdown.", "crates": ["crabgent-core", "crabgent-hook-log"], "surface": ["Hook::on_kernel_shutdown"]}
+      ],
+      "edges": [
+        {"from": "external", "to": "ctx", "label": "cancel", "kind": "runtime"},
+        {"from": "stop", "to": "ctx", "label": "reason", "kind": "runtime"},
+        {"from": "ctx", "to": "kernel", "label": "observe", "kind": "runtime"},
+        {"from": "kernel", "to": "tasks", "label": "drain", "kind": "runtime"},
+        {"from": "kernel", "to": "channel", "label": "grace", "kind": "runtime"},
+        {"from": "kernel", "to": "log", "label": "shutdown event", "kind": "runtime"}
+      ]
+    }
+  ],
+  "capabilityGroups": [
+    {"id": "core", "label": "Core Runtime", "crates": ["crabgent-core", "crabgent-log"]},
+    {"id": "providers", "label": "Providers", "crates": ["crabgent-provider-anthropic", "crabgent-provider-openai", "crabgent-provider-google", "crabgent-provider-transport", "crabgent-provider-elevenlabs", "crabgent-embedding-fastembed"]},
+    {"id": "channels", "label": "Channels", "crates": ["crabgent-channel", "crabgent-channel-slack", "crabgent-channel-matrix", "crabgent-channel-telegram", "crabgent-thinking"]},
+    {"id": "tools", "label": "Tools", "crates": ["crabgent-tool-memory", "crabgent-tool-calendar", "crabgent-tool-cron", "crabgent-tool-task", "crabgent-tool-models", "crabgent-tool-cache", "crabgent-tool-session", "crabgent-tool-consolidation"]},
+    {"id": "state", "label": "State", "crates": ["crabgent-store", "crabgent-store-sqlite", "crabgent-store-postgres", "crabgent-memory", "crabgent-memory-consolidation", "crabgent-session"]},
+    {"id": "automation", "label": "Automation", "crates": ["crabgent-calendar", "crabgent-cron", "crabgent-task"]},
+    {"id": "integration", "label": "Integration", "crates": ["crabgent-mcp-client", "crabgent-mcp-server", "crabgent-command", "crabgent-command-model", "crabgent-command-compact"]},
+    {"id": "hooks", "label": "Hooks", "crates": ["crabgent-hook-compact", "crabgent-hook-inject", "crabgent-hook-log", "crabgent-hook-subprocess"]},
+    {"id": "support", "label": "Support", "crates": ["crabgent-examples"]}
+  ]
+}

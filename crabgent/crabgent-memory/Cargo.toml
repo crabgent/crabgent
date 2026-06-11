@@ -1,0 +1,28 @@
+[package]
+name = "crabgent-memory"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Memory classification, recall scoring, clock helpers, and optional persist hook for crabgent."
+
+[lints]
+workspace = true
+
+[features]
+test-helpers = []
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-log.workspace = true
+crabgent-store.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+serde = { workspace = true }
+thiserror.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "test-util"] }
+serde_json = { workspace = true }

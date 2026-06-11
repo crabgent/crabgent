@@ -1,0 +1,52 @@
+# `cargo nextest run -p <crate>` is an additive runner that runs integration
+# test binaries in parallel (cargo test runs them sequentially by default).
+# No global thread-count override. Add per-crate overrides only when a test is
+# known to require serialization.
+
+[profile.default]
+fail-fast = false
+# Slow-timeout: a stuck Testcontainer (Postgres or Matrix Conduit) typically
+# clears within ~3 consecutive 60s "slow" periods before the Docker daemon
+# either recovers or signals failure. terminate-after = 3 caps the total wait
+# at ~3 minutes per test before nextest kills the binary.
+slow-timeout = { period = "60s", terminate-after = 3 }
+
+[profile.postgres-external]
+fail-fast = false
+# Used by `tools/postgres-test-db.py`. Postgres is intentionally NOT assigned
+# to the `serial` test-group here because every test gets an isolated database
+# on one externally owned pgvector container via `PG_TEST_DSN`.
+slow-timeout = { period = "60s", terminate-after = 3 }
+
+# Sequential-only Docker/flaky tests share a `serial` test-group with max 1
+# thread.
+# Per-override `test-threads` is NOT a recognised nextest override key; the
+# supported mechanism is a named test-group with `max-threads = 1` matched
+# via `test-group = "serial"`.
+# - dedup_pipeline_is_stable: crabgent-memory-consolidation/tests/property.rs:45
+#   proptest race when neighbouring tasks contend for the shared store.
+# - crabgent-store-postgres: nextest runs each test in its own process, so
+#   unbounded package-level parallelism creates many pgvector containers at
+#   once. Docker startup timeouts can happen before testcontainers returns a
+#   Rust drop guard, leaving `Created` containers behind.
+# - crabgent-channel-matrix: the shared Conduit OnceCell is also per process
+#   under nextest. Package-level parallelism can start many Conduit containers
+#   at once and has left `Created` containers behind on Docker Desktop.
+# These PASS deterministically when the test-group caps parallelism to one;
+# the rest of the workspace keeps default parallelism.
+[test-groups]
+serial = { max-threads = 1 }
+
+[[profile.default.overrides]]
+filter = 'test(=dedup_pipeline_is_stable) + package(crabgent-store-postgres) + package(crabgent-channel-matrix)'
+test-group = "serial"
+
+[[profile.postgres-external.overrides]]
+filter = 'test(=dedup_pipeline_is_stable) + package(crabgent-channel-matrix)'
+test-group = "serial"
+
+[profile.default.junit]
+path = "target/nextest/junit.xml"
+
+[profile.postgres-external.junit]
+path = "target/nextest/junit.xml"

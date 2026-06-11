@@ -1,0 +1,91 @@
+# crabgent example configuration.
+#
+# Copy to `config.toml`, create `./data`, and fill in the placeholders.
+# The CLI takes `--config`; default is `./config.toml`.
+
+sqlite_path = "./data/crabgent.sqlite"
+
+[openai]
+# Default: use `crabgent openai-login`, which stores an OAuth token at
+# the default path below. Uncomment `api_key` only when using a normal API key.
+# token_path = "~/.config/crabgent/credentials/openai_oauth_token"
+# api_key = "sk-..."
+
+[memory]
+persist_hook = true
+auto_recall = false
+
+[mcp_server]
+bind = "127.0.0.1:3100"
+
+[web]
+auth_token = "change-me"
+
+[[agents]]
+name = "local"
+provider = "openai"
+model = "gpt-5.5"
+reasoning_effort = "low"
+system_prompt = "You are a helpful local assistant. Reply in German."
+max_turns = 16
+holidays_country = "DE"
+holidays_subdivision = "NW"
+tui_bearer_token = "local-tui-token-change-me"
+
+# Optional. Enable only for a trusted local single-user assistant.
+[agents.tmux]
+enabled = false
+default_window = "main"
+
+# Optional Matrix agent.
+# [[agents]]
+# name = "matrix-local"
+# provider = "openai"
+# model = "gpt-5.5"
+# reasoning_effort = "low"
+# system_prompt = "You are a helpful Matrix assistant. Reply in German."
+# max_turns = 16
+# tui_bearer_token = "matrix-local-tui-token-change-me"
+#
+# [agents.matrix]
+# homeserver = "https://matrix.example.org"
+# user = "@matrix-local:example.org"
+# access_token = "syt_redacted"
+# device_id = "CRABGENTDEVICE"
+# allowed_users = ["@alice:example.org"]
+# restricted_tools = ["bash", "write_file", "update_file"]
+
+# Optional Telegram agent.
+# [[agents]]
+# name = "telegram-local"
+# provider = "openai"
+# model = "gpt-5.5"
+# reasoning_effort = "low"
+# system_prompt = "You are a helpful Telegram assistant. Reply in German."
+# max_turns = 16
+# bot_token = "123456:AAEXAMPLE..."
+# bot_user_id = "1234567890"
+# bot_username = "local_crabgent_bot"
+# pair_token = "pair-token-change-me"
+
+# Optional voice perception and explicit opt-in spoken replies.
+# [voice]
+# enabled = true
+#
+# [voice.audio]
+# api_key = "sk-..."
+# model = "gpt-5.5"
+#
+# [voice.tts]
+# api_key = "sk_..."
+# voice = "elevenlabs-voice-id"
+# model = "eleven_multilingual_v2"
+# format = "mp3"
+# forced_alignment = true
+#
+# [voice.tts.settings]
+# stability = 0.35
+# similarity_boost = 0.75
+# style = 0.55
+# speed = 1.0
+# use_speaker_boost = true

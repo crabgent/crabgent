@@ -1,0 +1,110 @@
+[package]
+name = "crabgent"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+autobins = false
+
+[lib]
+name = "crabgent_runtime"
+path = "src/lib.rs"
+
+[[bin]]
+name = "crabgent-reembed-memory"
+path = "src/bin/reembed_memory.rs"
+
+[features]
+default = []
+# Local FastEmbed BGE-M3 ONNX embedding provider. Disabled by default
+# because the bundled onnxruntime baseline requires AVX2 / x86-64-v3 on
+# x86_64 hosts. Enable on compatible local machines when local embeddings
+# should run in-process.
+fastembed = ["dep:crabgent-embedding-fastembed"]
+
+[dependencies]
+crabgent-core = { path = "../crabgent/crabgent-core" }
+crabgent-provider-openai = { path = "../crabgent/crabgent-provider-openai" }
+crabgent-provider-google = { path = "../crabgent/crabgent-provider-google" }
+crabgent-channel = { path = "../crabgent/crabgent-channel" }
+crabgent-channel-telegram = { path = "../crabgent/crabgent-channel-telegram" }
+crabgent-channel-matrix = { path = "../crabgent/crabgent-channel-matrix" }
+crabgent-session = { path = "../crabgent/crabgent-session" }
+crabgent-store = { path = "../crabgent/crabgent-store" }
+crabgent-store-sqlite = { path = "../crabgent/crabgent-store-sqlite" }
+crabgent-task = { path = "../crabgent/crabgent-task" }
+crabgent-cron = { path = "../crabgent/crabgent-cron" }
+crabgent-calendar = { path = "../crabgent/crabgent-calendar" }
+crabgent-memory = { path = "../crabgent/crabgent-memory" }
+crabgent-memory-consolidation = { path = "../crabgent/crabgent-memory-consolidation" }
+crabgent-provider-elevenlabs = { path = "../crabgent/crabgent-provider-elevenlabs" }
+crabgent-embedding-fastembed = { path = "../crabgent/crabgent-embedding-fastembed", optional = true }
+crabgent-mcp-client = { path = "../crabgent/crabgent-mcp-client" }
+crabgent-mcp-server = { path = "../crabgent/crabgent-mcp-server" }
+crabgent-thinking = { path = "../crabgent/crabgent-thinking" }
+crabgent-tool-cache = { path = "../crabgent/crabgent-tool-cache" }
+crabgent-tool-compact = { path = "../crabgent/crabgent-tool-compact" }
+crabgent-tool-audio = { path = "../crabgent/crabgent-tool-audio" }
+crabgent-tool-calendar = { path = "../crabgent/crabgent-tool-calendar" }
+crabgent-tool-consolidation = { path = "../crabgent/crabgent-tool-consolidation" }
+crabgent-tool-memory = { path = "../crabgent/crabgent-tool-memory" }
+crabgent-tool-models = { path = "../crabgent/crabgent-tool-models" }
+crabgent-tool-session = { path = "../crabgent/crabgent-tool-session" }
+crabgent-tool-cron = { path = "../crabgent/crabgent-tool-cron" }
+crabgent-tool-task = { path = "../crabgent/crabgent-tool-task" }
+crabgent-tool-tts = { path = "../crabgent/crabgent-tool-tts" }
+crabgent-tool-goal = { path = "../crabgent/crabgent-tool-goal" }
+crabgent-hook-inject = { path = "../crabgent/crabgent-hook-inject" }
+crabgent-hook-compact = { path = "../crabgent/crabgent-hook-compact" }
+crabgent-hook-divergence = { path = "../crabgent/crabgent-hook-divergence" }
+crabgent-hook-goal = { path = "../crabgent/crabgent-hook-goal" }
+crabgent-prosody = { path = "../crabgent/crabgent-prosody" }
+crabgent-command = { path = "../crabgent/crabgent-command" }
+crabgent-command-compact = { path = "../crabgent/crabgent-command-compact" }
+crabgent-command-model = { path = "../crabgent/crabgent-command-model" }
+crabgent-command-goal = { path = "../crabgent/crabgent-command-goal" }
+crabgent-hook-subprocess = { path = "../crabgent/crabgent-hook-subprocess" }
+crabgent-log = { path = "../crabgent/crabgent-log", features = ["subscriber"] }
+crabgent-hook-log = { path = "../crabgent/crabgent-hook-log" }
+matrix-sdk = { version = "0.17", default-features = false, features = ["markdown"] }
+
+anyhow = "1"
+async-trait = "0.1"
+bytes = "1"
+futures = "0.3"
+axum = { version = "0.8", default-features = false, features = ["tokio", "http1", "query", "form", "json", "ws"] }
+base64 = "0.22"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+clap = { version = "4", features = ["derive", "env"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls"] }
+secrecy = "0.10"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.11"
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+toml = "1.1.2+spec-1.1.0"
+tracing-log = "0.2"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4"] }
+
+ratatui = "0.29"
+crossterm = { version = "0.28", features = ["event-stream"] }
+tokio-tungstenite = "0.27"
+tui-markdown = "=0.3.6"
+[dev-dependencies]
+matrix-sdk = { version = "0.17", default-features = false, features = ["markdown"] }
+testcontainers = "0.27"
+tokio-util = { version = "0.7", features = ["rt"] }
+url = "2"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+
+[[bin]]
+name = "crabgent"
+path = "src/main.rs"

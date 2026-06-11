@@ -1,0 +1,227 @@
+[workspace]
+members = [
+    "crabgent-provider-anthropic",
+    "crabgent-channel",
+    "crabgent-channel-slack",
+    "crabgent-channel-telegram",
+    "crabgent-channel-matrix",
+    "crabgent-core",
+    "crabgent-cron",
+    "crabgent-embedding-fastembed",
+    "crabgent-examples",
+    "crabgent-hook-compact",
+    "crabgent-hook-divergence",
+    "crabgent-hook-goal",
+    "crabgent-hook-inject",
+    "crabgent-hook-log",
+    "crabgent-hook-subprocess",
+    "crabgent-calendar",
+    "crabgent-command",
+    "crabgent-command-compact",
+    "crabgent-command-goal",
+    "crabgent-command-model",
+    "crabgent-provider-google",
+    "crabgent-log",
+    "crabgent-memory",
+    "crabgent-memory-consolidation",
+    "crabgent-prosody",
+    "crabgent-mcp-client",
+    "crabgent-mcp-server",
+    "crabgent-provider-openai",
+    "crabgent-provider-transport",
+    "crabgent-session",
+    "crabgent-provider-elevenlabs",
+    "crabgent-store",
+    "crabgent-store-postgres",
+    "crabgent-store-sqlite",
+    "crabgent-task",
+    "crabgent-thinking",
+    "crabgent-tool-cache",
+    "crabgent-tool-calendar",
+    "crabgent-tool-audio",
+    "crabgent-tool-compact",
+    "crabgent-tool-consolidation",
+    "crabgent-tool-cron",
+    "crabgent-tool-goal",
+    "crabgent-tool-memory",
+    "crabgent-tool-models",
+    "crabgent-tool-session",
+    "crabgent-tool-task",
+    "crabgent-tool-tts",
+    "crabgent-test-support",
+]
+
+resolver = "3"
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+rust-version = "1.95"
+license = "Apache-2.0 OR MIT"
+authors = ["crabgent contributors"]
+repository = "https://example.invalid/crabgent"
+description = "Lean agentic LLM gateway kernel"
+
+[workspace.lints.rust]
+warnings = "deny"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
+# Panic tripwires
+string_slice = "warn"
+indexing_slicing = "warn"
+unwrap_used = "warn"
+# The blog calls this optional; crabgent allows grounded expect messages for
+# internal invariants and keeps undocumented suppressions blocked instead.
+expect_used = "allow"
+panic = "warn"
+todo = "warn"
+unimplemented = "warn"
+unreachable = "warn"
+get_unwrap = "warn"
+unwrap_in_result = "warn"
+unchecked_time_subtraction = "warn"
+panic_in_result_fn = "warn"
+# Silent-failure tripwires
+let_underscore_future = "warn"
+let_underscore_must_use = "warn"
+unused_result_ok = "warn"
+map_err_ignore = "warn"
+assertions_on_result_states = "warn"
+# Async/concurrency tripwires
+await_holding_lock = "warn"
+await_holding_refcell_ref = "warn"
+large_futures = "warn"
+# Unsafe/memory tripwires
+mem_forget = "warn"
+undocumented_unsafe_blocks = "warn"
+multiple_unsafe_ops_per_block = "warn"
+unnecessary_safety_doc = "warn"
+unnecessary_safety_comment = "warn"
+# Numeric correctness tripwires
+float_cmp = "warn"
+float_cmp_const = "warn"
+lossy_float_literal = "warn"
+cast_sign_loss = "warn"
+cast_possible_wrap = "warn"
+cast_precision_loss = "warn"
+cast_possible_truncation = "warn"
+invalid_upcast_comparisons = "warn"
+# Easy-to-avoid bug patterns
+rc_mutex = "warn"
+debug_assert_with_mut_call = "warn"
+iter_not_returning_iterator = "warn"
+expl_impl_clone_on_copy = "warn"
+infallible_try_from = "warn"
+dbg_macro = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+format_push_string = "warn"
+# Enforces clippy.toml's threshold of 15; workspace warnings are denied.
+cognitive_complexity = "warn"
+# Suppressions must be deliberate and documented.
+allow_attributes = "warn"
+allow_attributes_without_reason = "warn"
+# Internal codebase: doc-noise lints off.
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"
+return_self_not_must_use = "allow"
+new_without_default = "allow"
+should_implement_trait = "allow"
+# Trait conformance: async/Result sometimes required by interface shape.
+unnecessary_wraps = "allow"
+unused_async = "allow"
+# Nursery lints: noisy or unstable.
+option_if_let_else = "allow"
+significant_drop_tightening = "allow"
+too_long_first_doc_paragraph = "allow"
+
+[workspace.dependencies]
+crabgent-channel = { path = "crabgent-channel" }
+crabgent-channel-slack = { path = "crabgent-channel-slack" }
+crabgent-channel-telegram = { path = "crabgent-channel-telegram" }
+crabgent-calendar = { path = "crabgent-calendar" }
+crabgent-command = { path = "crabgent-command" }
+crabgent-command-compact = { path = "crabgent-command-compact" }
+crabgent-command-goal = { path = "crabgent-command-goal" }
+crabgent-command-model = { path = "crabgent-command-model" }
+crabgent-core = { path = "crabgent-core" }
+crabgent-provider-google = { path = "crabgent-provider-google" }
+crabgent-channel-matrix = { path = "crabgent-channel-matrix" }
+crabgent-cron = { path = "crabgent-cron" }
+crabgent-hook-compact = { path = "crabgent-hook-compact" }
+crabgent-hook-divergence = { path = "crabgent-hook-divergence" }
+crabgent-hook-goal = { path = "crabgent-hook-goal" }
+crabgent-hook-inject = { path = "crabgent-hook-inject" }
+crabgent-hook-log = { path = "crabgent-hook-log" }
+crabgent-log = { path = "crabgent-log" }
+crabgent-memory = { path = "crabgent-memory" }
+crabgent-memory-consolidation = { path = "crabgent-memory-consolidation" }
+crabgent-prosody = { path = "crabgent-prosody" }
+crabgent-mcp-client = { path = "crabgent-mcp-client" }
+crabgent-mcp-server = { path = "crabgent-mcp-server" }
+crabgent-provider-openai = { path = "crabgent-provider-openai" }
+crabgent-provider-transport = { path = "crabgent-provider-transport" }
+crabgent-session = { path = "crabgent-session" }
+crabgent-provider-elevenlabs = { path = "crabgent-provider-elevenlabs" }
+crabgent-store = { path = "crabgent-store" }
+crabgent-store-postgres = { path = "crabgent-store-postgres" }
+crabgent-store-sqlite = { path = "crabgent-store-sqlite" }
+crabgent-task = { path = "crabgent-task" }
+crabgent-test-support = { path = "crabgent-test-support" }
+crabgent-thinking = { path = "crabgent-thinking" }
+crabgent-tool-audio = { path = "crabgent-tool-audio" }
+crabgent-tool-cache = { path = "crabgent-tool-cache" }
+crabgent-tool-calendar = { path = "crabgent-tool-calendar" }
+crabgent-tool-compact = { path = "crabgent-tool-compact" }
+crabgent-tool-consolidation = { path = "crabgent-tool-consolidation" }
+crabgent-tool-cron = { path = "crabgent-tool-cron" }
+crabgent-tool-goal = { path = "crabgent-tool-goal" }
+crabgent-tool-models = { path = "crabgent-tool-models" }
+crabgent-tool-task = { path = "crabgent-tool-task" }
+sqlx = { version = "0.9.0", default-features = false, features = ["runtime-tokio", "sqlite", "postgres", "chrono", "uuid", "json", "macros", "migrate"] }
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "sync", "macros", "io-util", "fs", "time", "process", "signal"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+async-trait = "0.1"
+futures = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+thiserror = "2"
+tracing = "0.1"
+log = "0.4"
+tracing-log = "0.2.0"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
+tracing-test = "0.2.6"
+unicode-properties = { version = "0.1.4", default-features = false, features = ["general-category"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
+chrono-tz = { version = "0.10", default-features = false }
+cron = "0.16"
+uuid = { version = "1", features = ["v5", "v7", "serde"] }
+matrix-sdk = { version = "0.17", default-features = false, features = ["markdown"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "rustls", "form", "query"] }
+url = "2"
+bytes = "1"
+dotenvy = "0.15.7"
+fastembed = { version = "5.13.4", default-features = false, features = ["ort-download-binaries-native-tls", "hf-hub-native-tls"] }
+httpmock = "0.8"
+image = { version = "0.25.10", default-features = false, features = ["png", "jpeg", "gif", "webp"] }
+infer = "0.19.0"
+nix = { version = "0.31.3", default-features = false, features = ["process", "signal"] }
+tokio-tungstenite = { version = "0.29.0", features = ["native-tls"] }
+lru = "0.18.0"
+once_cell = "1.21.4"
+rand = "0.10.1"
+base64 = "0.22.1"
+proptest = "1.11"
+regex = "1.12.3"
+secrecy = "0.10.3"
+subtle = "2.6"
+sha2 = "0.11.0"
+pgvector = "0.4.2"
+sqlite-vec = "0.1.9"
+libsqlite3-sys = "0.37.0"
+tiktoken_rs = { package = "tiktoken-rs", version = "0.11.0" }

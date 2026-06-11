@@ -1,0 +1,7 @@
+cognitive-complexity-threshold = 15
+too-many-lines-threshold = 100
+type-complexity-threshold = 250
+allow-dbg-in-tests = true
+allow-expect-in-tests = true
+allow-indexing-slicing-in-tests = true
+allow-panic-in-tests = true

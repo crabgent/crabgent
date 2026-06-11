@@ -1,0 +1,27 @@
+[package]
+name = "crabgent-tool-models"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "LLM-facing model registry tool exposing list/get operations over Kernel.models()."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-log.workspace = true
+crabgent-store.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+crabgent-store = { workspace = true, features = ["memory"] }
+crabgent-test-support = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
+tokio-util.workspace = true

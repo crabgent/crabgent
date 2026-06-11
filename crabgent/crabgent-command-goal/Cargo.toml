@@ -1,0 +1,26 @@
+[package]
+name = "crabgent-command-goal"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Goal command adapter: /goal slash-command surface (show, set, pause, resume, clear) over the host GoalRuntime."
+
+[dependencies]
+async-trait.workspace = true
+crabgent-command.workspace = true
+crabgent-core.workspace = true
+crabgent-hook-goal.workspace = true
+crabgent-store.workspace = true
+
+[dev-dependencies]
+crabgent-channel.workspace = true
+crabgent-store = { workspace = true, features = ["memory"] }
+crabgent-test-support = { workspace = true }
+tokio.workspace = true
+tokio-util.workspace = true
+
+[lints]
+workspace = true

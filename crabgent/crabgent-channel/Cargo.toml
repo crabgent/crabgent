@@ -1,0 +1,41 @@
+[package]
+name = "crabgent-channel"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Channel abstraction for crabgent: Channel/ChannelKind/Participant traits and types for plug-in messaging adapters (Slack, Telegram, Signal, web)."
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-prosody.workspace = true
+crabgent-hook-inject.workspace = true
+async-trait.workspace = true
+base64.workspace = true
+chrono.workspace = true
+futures.workspace = true
+infer.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+unicode-properties.workspace = true
+bytes.workspace = true
+image.workspace = true
+uuid = { workspace = true, features = ["v7"] }
+tokio-util.workspace = true
+crabgent-log.workspace = true
+subtle.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "test-util"] }
+tempfile = "3"
+
+[features]
+test-helpers = []
+
+[lints]
+workspace = true

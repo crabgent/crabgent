@@ -1,0 +1,22 @@
+[package]
+name = "crabgent-hook-inject"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Runtime message injection for crabgent: external code submits messages keyed by RunId, the hook splices them into the next LlmRequest"
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+async-trait.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["sync"] }
+crabgent-log.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }

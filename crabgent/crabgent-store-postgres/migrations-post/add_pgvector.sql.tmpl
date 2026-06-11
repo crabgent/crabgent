@@ -1,0 +1,4 @@
+-- reverse: DROP INDEX IF EXISTS memory_docs_embedding_hnsw; ALTER TABLE memory_docs DROP COLUMN IF EXISTS embedding; DROP EXTENSION IF EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS vector;
+ALTER TABLE memory_docs ADD COLUMN IF NOT EXISTS embedding vector(${EMBEDDING_DIM});
+CREATE INDEX IF NOT EXISTS memory_docs_embedding_hnsw ON memory_docs USING hnsw (embedding vector_cosine_ops);

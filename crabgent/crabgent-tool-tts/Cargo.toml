@@ -1,0 +1,26 @@
+[package]
+name = "crabgent-tool-tts"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "speak tool: a provider-neutral text-to-speech tool that synthesizes audio from text with any TtsProvider and returns a stored audio handle."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+# DEVIATION: AudioStore + AudioStoreError live in crabgent-channel (same exception as crabgent-tool-audio).
+crabgent-channel.workspace = true
+crabgent-log.workspace = true
+async-trait.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+thiserror.workspace = true
+bytes.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }

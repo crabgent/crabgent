@@ -1,0 +1,36 @@
+[package]
+name = "crabgent-tool-audio"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "hear_again tool: an on-demand pull tool that routes a retained user voice clip to an independent audio-native model, plus an auto-hint hook that advertises it."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+# DEVIATION: tool -> channel. AudioStore lives in crabgent-channel (Initial D1,
+# cloned from ImageStore). hear_again reuses that retained-audio trait surface
+# rather than introducing a parallel one. Documented as a narrow exception in
+# Keep this crate independent from channel adapters.
+crabgent-channel.workspace = true
+crabgent-log.workspace = true
+async-trait.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true
+thiserror.workspace = true
+# tokio-util (CancellationToken) is a production dep: `ask_audio` names the
+# token in its public signature to thread cancellation into the secondary call.
+tokio-util.workspace = true
+# tokio (time): the AudioCircuit breaker uses tokio::time::{timeout, Instant}
+# for the per-call latency ceiling and the cooldown clock. Recorded in
+# Hardening dependencies used for call execution and cancellation.
+tokio = { workspace = true, features = ["time", "process", "io-util"] }
+
+[dev-dependencies]
+bytes.workspace = true
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "test-util"] }

@@ -1,0 +1,27 @@
+[package]
+name = "crabgent-test-support"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Shared test fixtures for the crabgent workspace: StubProvider, message/response builders, and recording channel/command doubles. Consumed only via dev-dependencies."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-channel.workspace = true
+crabgent-command.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+
+[dev-dependencies]
+crabgent-store.workspace = true
+futures.workspace = true
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }

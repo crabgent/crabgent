@@ -1,0 +1,14 @@
+crabgent-tool-compact
+=====================
+
+The deterministic semantic tool-output filters in this crate (the
+test-runner, git, ls, grep, read_file, and mcp output reductions) are a
+clean-room native reimplementation inspired by the design of the rtk
+tool, which is licensed under the Apache License, Version 2.0.
+
+No rtk source code is included, copied, or linked. Only the
+filter-design lineage is acknowledged here as an Apache-2.0 courtesy.
+
+This crate is part of the crabgent workspace and is licensed under
+"Apache-2.0 OR MIT"; see the workspace-level LICENSE-APACHE and
+LICENSE-MIT files for the full terms.

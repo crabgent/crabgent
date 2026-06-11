@@ -1,0 +1,24 @@
+[package]
+name = "crabgent-hook-goal"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Thread-goal runtime: a Hook that injects goal steering and accounts token/time usage, plus a host-facing GoalRuntime for status control and turn continuation."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-log.workspace = true
+crabgent-store.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+crabgent-store = { workspace = true, features = ["memory"] }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }

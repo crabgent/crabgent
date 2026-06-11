@@ -1,0 +1,9 @@
+/config.toml
+/data/*
+!/data/.gitkeep
+/target/
+/app/target/
+/crabgent/target/
+*.sqlite
+*.sqlite-*
+.env

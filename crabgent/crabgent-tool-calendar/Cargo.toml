@@ -1,0 +1,24 @@
+[package]
+name = "crabgent-tool-calendar"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "LLM-facing calendar tool with op-dispatch: holidays_list, holidays_next, holiday_check, days_between, date_arith, weekday_info"
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core      = { workspace = true }
+crabgent-calendar  = { workspace = true }
+async-trait       = { workspace = true }
+chrono            = { workspace = true }
+serde             = { workspace = true }
+serde_json        = { workspace = true }
+tokio             = { workspace = true, features = ["macros", "rt"] }
+
+[dev-dependencies]
+proptest          = { workspace = true }

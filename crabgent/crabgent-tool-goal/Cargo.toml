@@ -1,0 +1,24 @@
+[package]
+name = "crabgent-tool-goal"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Thread-goal tool: a Tool exposing get/create/update operations over a GoalStore, gated by a PolicyHook on typed Action::Goal* variants."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-log.workspace = true
+crabgent-store.workspace = true
+async-trait.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true
+
+[dev-dependencies]
+crabgent-store = { workspace = true, features = ["memory"] }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }

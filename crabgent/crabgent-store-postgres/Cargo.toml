@@ -1,0 +1,36 @@
+[package]
+name = "crabgent-store-postgres"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Postgres-backed crabgent-store implementation."
+
+[features]
+default = []
+test-support = []
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-store.workspace = true
+crabgent-log.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+pgvector = { workspace = true, features = ["sqlx"] }
+secrecy.workspace = true
+serde_json.workspace = true
+sqlx = { workspace = true, features = ["postgres", "json", "tls-rustls-aws-lc-rs"] }
+thiserror.workspace = true
+tokio.workspace = true
+url.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
+testcontainers = { version = "0.27.3", default-features = false, features = ["aws-lc-rs", "watchdog"] }
+testcontainers-modules = { version = "0.15.0", default-features = false, features = ["postgres", "aws-lc-rs"] }

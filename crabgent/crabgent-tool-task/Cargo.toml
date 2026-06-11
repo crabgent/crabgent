@@ -1,0 +1,29 @@
+[package]
+name = "crabgent-tool-task"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "LLM-facing task tool over TaskExecutor and TaskStore."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-store.workspace = true
+crabgent-task.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+crabgent-log.workspace = true
+
+[dev-dependencies]
+crabgent-store = { workspace = true, features = ["memory"] }
+crabgent-test-support = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
+tokio-util.workspace = true

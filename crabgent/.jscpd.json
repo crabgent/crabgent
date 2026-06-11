@@ -1,0 +1,19 @@
+{
+  "format": ["rust"],
+  "pattern": "crabgent-*/src/**/*.rs",
+  "ignore": [
+    "**/target/**",
+    "**/tests/**",
+    "**/*test*.rs",
+    "**/test_support.rs",
+    "**/src/**/tests.rs",
+    "**/src/**/tests/*.rs"
+  ],
+  "minLines": 12,
+  "minTokens": 50,
+  "maxSize": "1mb",
+  "threshold": 3,
+  "reporters": ["console", "json"],
+  "output": "target/jscpd",
+  "noTips": true
+}

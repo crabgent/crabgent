@@ -1,0 +1,22 @@
+[package]
+name = "crabgent-embedding-fastembed"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "FastEmbed embedding provider for crabgent"
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core = { workspace = true }
+fastembed = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+async-trait = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }

@@ -1,0 +1,34 @@
+[package]
+name = "crabgent-hook-divergence"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Divergence-routing hook: on a high-confidence text-vs-prosody contradiction, push a one-shot audio-native perception call, tag the turn, and log a personal divergence corpus."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+# DEVIATION: hook -> channel/store/prosody/tool-audio. DivergenceHook composes
+# the cheap detector (prosody), the retained-audio store (channel), the shared
+# audio-call path ask_audio (tool-audio), and the personal corpus
+# (store::MemoryStore). It reuses those trait surfaces instead of introducing
+# parallel ones, mirroring crabgent-hook-compact (-> store). Acyclic: all deps
+# point inward to crabgent-core; nothing depends on this leaf crate. Documented
+# Keep this hook independent from channel adapters and provider crates.
+crabgent-channel.workspace = true
+crabgent-store.workspace = true
+crabgent-prosody.workspace = true
+crabgent-tool-audio.workspace = true
+crabgent-log.workspace = true
+async-trait.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+bytes.workspace = true
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "time"] }
+tokio-util.workspace = true

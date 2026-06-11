@@ -1,0 +1,29 @@
+/target
+**/*.rs.bk
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Project agent assets are tracked even when a global ignore excludes `.claude`.
+!.claude
+!.claude/**
+
+# Local Claude state
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/worktrees/
+
+# Coverage artifacts
+*.profraw
+lcov.info
+clippy-report.json
+target-cov/
+
+# Editor backups
+*~
+
+# OS metadata
+.localized
+.env

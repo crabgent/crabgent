@@ -1,0 +1,29 @@
+[package]
+name = "crabgent-task"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "TaskExecutor that spawns kernel runs as background tasks, persists incremental output through TaskStore, and dispatches completion notifications."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-store.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+futures.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+crabgent-log.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+crabgent-store = { workspace = true, features = ["memory"] }
+crabgent-test-support = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "time"] }

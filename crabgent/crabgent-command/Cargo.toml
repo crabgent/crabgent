@@ -1,0 +1,27 @@
+[package]
+name = "crabgent-command"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Command dispatch framework for channel adapters."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-channel.workspace = true
+crabgent-core.workspace = true
+crabgent-store.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio-util.workspace = true
+
+[dev-dependencies]
+crabgent-store = { workspace = true, features = ["memory"] }
+crabgent-test-support = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }

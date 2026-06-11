@@ -1,0 +1,31 @@
+[package]
+name = "crabgent-provider-anthropic"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Anthropic Provider implementation for crabgent"
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core = { workspace = true }
+crabgent-provider-transport = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+crabgent-log.workspace = true
+reqwest = { workspace = true }
+bytes = { workspace = true }
+
+[dev-dependencies]
+dotenvy = { workspace = true }
+mockito = "1"
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "test-util"] }

@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>crabgent architecture atlas</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #10100f;
+  --panel: #181714;
+  --panel-2: #201e19;
+  --line: #3b3830;
+  --muted: #a6a097;
+  --text: #f3eee4;
+  --amber: #ffb454;
+  --green: #9bd978;
+  --cyan: #67d4c4;
+  --red: #e86f5c;
+  --violet: #b8a1ff;
+  --steel: #9ea7a3;
+  --shadow: rgba(0, 0, 0, 0.28);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: 0; }
+body {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+button { font: inherit; color: inherit; }
+.shell { min-height: 100vh; display: grid; grid-template-columns: 260px minmax(520px, 1fr) 360px; grid-template-rows: auto 1fr; gap: 0; }
+.topbar { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 22px 14px; border-bottom: 1px solid var(--line); background: rgba(16,16,15,0.94); position: sticky; top: 0; z-index: 5; }
+.brand { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.brand h1 { margin: 0; font-size: clamp(20px, 2vw, 32px); line-height: 1; font-weight: 760; text-transform: lowercase; }
+.brand p { margin: 0; color: var(--muted); font-size: 13px; max-width: 760px; }
+.stats { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.stat { border: 1px solid var(--line); background: var(--panel); padding: 7px 9px; border-radius: 6px; min-width: 82px; }
+.stat b { display: block; font-size: 15px; }
+.stat span { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; }
+.rail { border-right: 1px solid var(--line); background: rgba(24,23,20,0.94); padding: 18px 14px; overflow: auto; max-height: calc(100vh - 73px); position: sticky; top: 73px; }
+.rail h2, .inspector h2 { margin: 0 0 10px; font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+.map-button, .crate-chip, .action-button { width: 100%; border: 1px solid var(--line); background: transparent; border-radius: 6px; padding: 9px 10px; text-align: left; cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
+.map-button:hover, .crate-chip:hover, .action-button:hover { border-color: var(--amber); background: #272219; }
+.map-button.active { border-color: var(--amber); background: #312515; color: #fff7e9; }
+.map-list, .group-list { display: grid; gap: 8px; margin-bottom: 20px; }
+.map-button small { display: block; color: var(--muted); margin-top: 3px; line-height: 1.25; }
+.group { margin: 0 0 16px; }
+.group-title { color: var(--text); font-size: 13px; margin-bottom: 7px; display: flex; justify-content: space-between; gap: 8px; }
+.group-title span:last-child { color: var(--muted); }
+.crate-chip { padding: 7px 8px; margin: 0 0 6px; font-size: 12px; line-height: 1.2; color: var(--muted); overflow-wrap: anywhere; }
+.crate-chip.active { color: var(--text); border-color: var(--cyan); background: #142522; }
+.main { padding: 18px; min-width: 0; }
+.map-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: start; margin-bottom: 14px; }
+.map-head h2 { margin: 0 0 4px; font-size: clamp(22px, 3vw, 42px); line-height: 1.02; }
+.map-head p { margin: 0; color: var(--muted); max-width: 860px; }
+.crumbs { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+.crumbs button { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 6px 8px; color: var(--muted); cursor: pointer; }
+.graph-frame { border: 1px solid var(--line); border-radius: 8px; background: rgba(20,19,16,0.92); box-shadow: 0 14px 40px var(--shadow); overflow: hidden; }
+.graph-toolbar { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+.graph-toolbar code { color: var(--cyan); }
+svg { display: block; width: 100%; height: min(58vh, 560px); min-height: 420px; }
+.edge { stroke-width: 2; fill: none; opacity: .72; }
+.edge.flow { stroke: var(--cyan); }
+.edge.policy { stroke: var(--amber); stroke-dasharray: 8 7; }
+.edge.tool { stroke: var(--violet); }
+.edge.state { stroke: var(--green); }
+.edge.runtime { stroke: var(--red); stroke-dasharray: 4 6; }
+.edge.dim { opacity: .18; }
+.edge-label rect { fill: #13120f; stroke: var(--line); }
+.edge-label text { fill: var(--muted); font-size: 13px; }
+.node rect { stroke-width: 1.5; fill: #1d1b17; stroke: var(--line); rx: 7; }
+.node text { pointer-events: none; }
+.node .node-title { fill: var(--text); font-size: 18px; font-weight: 740; }
+.node .node-kind { fill: var(--muted); font-size: 11px; text-transform: uppercase; }
+.node.boundary rect, .node.adapter rect { stroke: var(--cyan); }
+.node.control rect, .node.policy rect { stroke: var(--amber); }
+.node.state rect { stroke: var(--green); }
+.node.tool rect { stroke: var(--violet); }
+.node.llm rect { stroke: #f2cf63; }
+.node.runtime rect { stroke: var(--red); }
+.node:hover rect { stroke-width: 2.5; filter: drop-shadow(0 0 14px rgba(255,180,84,.22)); }
+.node.selected rect { fill: #2c2418; stroke-width: 3; }
+.node.highlight rect { fill: #17302b; stroke-width: 2.4; }
+.node.dim { opacity: .3; }
+.legend-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.legend-item { border: 1px solid var(--line); border-radius: 6px; padding: 8px; color: var(--muted); font-size: 12px; background: rgba(24,23,20,.75); }
+.legend-item span { display: inline-block; width: 22px; height: 3px; margin-right: 6px; vertical-align: middle; }
+.inspector { border-left: 1px solid var(--line); background: rgba(24,23,20,0.96); padding: 18px 16px 28px; overflow: auto; max-height: calc(100vh - 73px); position: sticky; top: 73px; }
+.panel-title { margin: 0 0 6px; font-size: 22px; line-height: 1.08; }
+.summary { color: var(--muted); line-height: 1.45; margin: 0 0 14px; }
+.section { border-top: 1px solid var(--line); padding-top: 13px; margin-top: 13px; }
+.section h3 { margin: 0 0 9px; font-size: 12px; color: var(--muted); text-transform: uppercase; }
+.pill-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.pill { border: 1px solid var(--line); background: #141310; color: var(--muted); border-radius: 999px; padding: 5px 8px; font-size: 12px; max-width: 100%; overflow-wrap: anywhere; }
+.pill.clickable { cursor: pointer; }
+.pill.clickable:hover { color: var(--text); border-color: var(--cyan); }
+.facts { display: grid; gap: 8px; }
+.fact { display: grid; grid-template-columns: 94px minmax(0, 1fr); gap: 9px; font-size: 13px; }
+.fact span:first-child { color: var(--muted); }
+.fact span:last-child { overflow-wrap: anywhere; }
+.edge-list { display: grid; gap: 8px; }
+.edge-card { border: 1px solid var(--line); border-radius: 6px; padding: 8px; font-size: 12px; color: var(--muted); background: #141310; }
+.edge-card b { color: var(--text); }
+.action-button { color: var(--text); text-align: center; margin-top: 8px; }
+.action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.empty { color: var(--muted); font-size: 13px; }
+@media (max-width: 1120px) {
+  .shell { grid-template-columns: 220px minmax(0, 1fr); }
+  .inspector { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); max-height: none; position: static; }
+  .rail { max-height: none; position: static; }
+}
+@media (max-width: 780px) {
+  .shell { display: block; }
+  .topbar { position: static; align-items: flex-start; flex-direction: column; }
+  .rail { border-right: 0; border-bottom: 1px solid var(--line); }
+  .main { padding: 12px; }
+  .map-head { grid-template-columns: 1fr; }
+  .legend-strip { grid-template-columns: 1fr 1fr; }
+  svg { min-height: 380px; height: 58vh; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <h1>crabgent architecture atlas</h1>
+      <p id="tagline"></p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+  <aside class="rail">
+    <h2>Function Maps</h2>
+    <div class="map-list" id="mapList"></div>
+    <h2>Crate Underside</h2>
+    <div id="crateGroups"></div>
+  </aside>
+  <main class="main">
+    <div class="map-head">
+      <div>
+        <h2 id="mapTitle"></h2>
+        <p id="mapSubtitle"></p>
+      </div>
+      <div class="crumbs" id="crumbs"></div>
+    </div>
+    <div class="graph-frame">
+      <div class="graph-toolbar">
+        <span id="mapLegend"></span>
+        <span><code>click</code> select · <code>double</code> drill</span>
+      </div>
+      <svg id="graph" viewBox="0 0 1160 650" role="img" aria-labelledby="mapTitle mapSubtitle"></svg>
+    </div>
+    <div class="legend-strip">
+      <div class="legend-item"><span style="background:var(--cyan)"></span>runtime flow</div>
+      <div class="legend-item"><span style="background:var(--amber)"></span>policy/trust</div>
+      <div class="legend-item"><span style="background:var(--violet)"></span>tool loop</div>
+      <div class="legend-item"><span style="background:var(--green)"></span>state/recall</div>
+      <div class="legend-item"><span style="background:var(--red)"></span>lifecycle</div>
+    </div>
+  </main>
+  <aside class="inspector" id="inspector"></aside>
+</div>
+<script id="atlas-data" type="application/json">{"title":"crabgent architecture atlas","tagline":"A functional map of the runtime, with crates as implementation evidence.","principles":["Kernel owns the run loop. Transport stays outside.","Policy gates actions before side effects.","Hooks compose behavior without becoming a second kernel.","Crates implement capabilities; capabilities are the navigation surface."],"entryMap":"overview","maps":[{"id":"overview","title":"Runtime Spine","subtitle":"Follow one user turn from channel ingress to LLM, tools, memory, outbound delivery, and lifecycle signals.","legend":"Solid lines are runtime flow. Amber lines are policy or trust boundaries. Green lines are persistence and recall.","nodes":[{"id":"ingress","label":"Ingress","kind":"boundary","x":60,"y":150,"w":150,"h":70,"summary":"Slack, Matrix, Telegram, MCP, or direct callers turn outside events into typed crabgent inputs.","crates":["crabgent-channel","crabgent-channel-slack","crabgent-channel-matrix","crabgent-channel-telegram","crabgent-mcp-server"],"surface":["InboundEvent","ChannelInbox","KernelChannelInbox","McpSessionRegistry"],"targetMap":"channels"},{"id":"identity","label":"Subject + Session","kind":"state","x":275,"y":150,"w":170,"h":70,"summary":"Subject carries auth identity, Owner carries persistence identity, and Session gives a conversation-shaped history.","crates":["crabgent-core","crabgent-session","crabgent-store","crabgent-tool-session"],"surface":["Subject","Owner","ThreadId","SessionManager","SessionPersistHook"],"targetMap":"context"},{"id":"policy","label":"Policy Gate","kind":"control","x":515,"y":150,"w":150,"h":70,"summary":"Every meaningful side-effect crosses Action and PolicyHook before it runs.","crates":["crabgent-core"],"surface":["Action","PolicyHook","StrictPolicy","DenyAllPolicy","AllowAllPolicy"],"targetMap":"policy-hooks"},{"id":"hooks","label":"Hook Chain","kind":"control","x":735,"y":150,"w":155,"h":70,"summary":"FIFO hooks enrich, observe, replace, deny, compact, inject, log, or cancel without becoming transport code.","crates":["crabgent-core","crabgent-calendar","crabgent-hook-compact","crabgent-hook-inject","crabgent-hook-log","crabgent-thinking"],"surface":["Hook","HookChain","Decision","RunCtx","TimeHintHook","ThinkingHook"],"targetMap":"policy-hooks"},{"id":"provider","label":"Provider + Model","kind":"llm","x":965,"y":150,"w":170,"h":70,"summary":"Provider-neutral requests are reshaped into Anthropic, OpenAI, Google, STT, image-generation, or embedding calls.","crates":["crabgent-core","crabgent-provider-anthropic","crabgent-provider-openai","crabgent-provider-google","crabgent-provider-transport","crabgent-provider-elevenlabs","crabgent-embedding-fastembed"],"surface":["Provider","ModelRegistry","ModelInfo","ModelCapabilities","AuthStrategy","WireFormat"],"targetMap":"providers"},{"id":"tool-loop","label":"Tool Loop","kind":"tool","x":735,"y":335,"w":170,"h":70,"summary":"Tool calls are parsed, policy-gated, executed with ToolCtx, observed by hooks, and optionally compacted or cached.","crates":["crabgent-core","crabgent-tool-memory","crabgent-tool-calendar","crabgent-tool-cron","crabgent-tool-task","crabgent-tool-models","crabgent-tool-cache","crabgent-channel"],"surface":["Tool","ToolCtx","ToolResult","Args","Op","TOOL_NAME"],"targetMap":"tools"},{"id":"memory","label":"Memory + Recall","kind":"state","x":500,"y":335,"w":170,"h":70,"summary":"Memory classes, recall strategies, embedding-aware search, lifecycle tools, and consolidation turn history into useful context.","crates":["crabgent-memory","crabgent-tool-memory","crabgent-memory-consolidation","crabgent-tool-consolidation","crabgent-store","crabgent-store-sqlite","crabgent-store-postgres"],"surface":["MemoryClass","RecallStrategy","MemoryDoc","MemoryScope","ConsolidationRunner"],"targetMap":"memory"},{"id":"scheduling","label":"Calendar / Cron / Task","kind":"runtime","x":275,"y":335,"w":170,"h":70,"summary":"Time hints, scheduled jobs, and background tasks create controlled work beyond one immediate LLM response.","crates":["crabgent-calendar","crabgent-tool-calendar","crabgent-cron","crabgent-tool-cron","crabgent-task","crabgent-tool-task"],"surface":["TimeHintHook","HolidayProvider","CronScheduler","CronJob","TaskExecutor","TaskTool"],"targetMap":"scheduling"},{"id":"outbound","label":"Outbound + Progress","kind":"boundary","x":965,"y":335,"w":170,"h":70,"summary":"Replies, channel side-effects, notifications, reactions, typing, and reasoning progress leave the kernel through typed sinks.","crates":["crabgent-channel","crabgent-channel-slack","crabgent-channel-matrix","crabgent-channel-telegram","crabgent-thinking"],"surface":["ChannelSink","ChannelRouter","MessageRef","TypingIndicator","ProgressSink"],"targetMap":"channels"},{"id":"stores","label":"Stores","kind":"state","x":60,"y":335,"w":150,"h":70,"summary":"In-memory, SQLite, and Postgres backends persist sessions, memory, cron, and tool-cache state behind traits.","crates":["crabgent-store","crabgent-store-sqlite","crabgent-store-postgres"],"surface":["SessionStore","MemoryStore","CronStore","ToolCacheStore"],"targetMap":"stores"},{"id":"media","label":"Vision + Audio","kind":"boundary","x":60,"y":505,"w":170,"h":70,"summary":"Channel-side media validation keeps bytes typed before providers reshape them for model-specific wire formats.","crates":["crabgent-core","crabgent-channel","crabgent-provider-openai","crabgent-provider-anthropic","crabgent-provider-elevenlabs"],"surface":["ImagePayload","AudioPayload","ImageValidator","AudioValidator","SttProvider"],"targetMap":"media"},{"id":"mcp","label":"MCP Bridge","kind":"boundary","x":275,"y":505,"w":170,"h":70,"summary":"MCP client imports remote tools; MCP server exports crabgent tools and chat through JSON-RPC sessions.","crates":["crabgent-mcp-client","crabgent-mcp-server","crabgent-core"],"surface":["McpClientBuilder","McpServer","ToolFilter","chat"],"targetMap":"mcp"},{"id":"lifecycle","label":"Cancel + Shutdown","kind":"runtime","x":500,"y":505,"w":170,"h":70,"summary":"Stop-patterns, hook cancellation, external cancellation, task drains, and graceful shutdown converge on explicit cancellation roots.","crates":["crabgent-core","crabgent-channel","crabgent-cron","crabgent-task","crabgent-hook-log"],"surface":["CancelReason","CancellationToken","Kernel::shutdown","ChannelInbox::shutdown"],"targetMap":"lifecycle"}],"edges":[{"from":"ingress","to":"identity","label":"typed event","kind":"flow"},{"from":"identity","to":"policy","label":"subject + owner","kind":"policy"},{"from":"policy","to":"hooks","label":"allowed request","kind":"policy"},{"from":"hooks","to":"provider","label":"LlmRequest","kind":"flow"},{"from":"provider","to":"tool-loop","label":"tool call","kind":"tool"},{"from":"tool-loop","to":"provider","label":"tool result","kind":"tool"},{"from":"tool-loop","to":"memory","label":"store/search","kind":"state"},{"from":"memory","to":"identity","label":"recall context","kind":"state"},{"from":"scheduling","to":"tool-loop","label":"deferred work","kind":"runtime"},{"from":"stores","to":"identity","label":"history","kind":"state"},{"from":"stores","to":"memory","label":"memory docs","kind":"state"},{"from":"provider","to":"outbound","label":"assistant text","kind":"flow"},{"from":"tool-loop","to":"outbound","label":"channel tools","kind":"tool"},{"from":"media","to":"provider","label":"typed payload","kind":"flow"},{"from":"mcp","to":"tool-loop","label":"proxied tools","kind":"tool"},{"from":"lifecycle","to":"hooks","label":"cancel reason","kind":"runtime"}]},{"id":"channels","title":"Channel Boundary","subtitle":"Adapters normalize outside conversations into safe kernel runs, then route typed outbound effects back to the right transport.","legend":"Ingress hardening happens before kernel context is built. Outbound is tool-driven and policy-gated.","nodes":[{"id":"slack","label":"Slack","kind":"adapter","x":55,"y":85,"w":130,"h":60,"summary":"Socket Mode plus Web API: threads, uploads, reactions, reads, progress.","crates":["crabgent-channel-slack"]},{"id":"matrix","label":"Matrix","kind":"adapter","x":55,"y":190,"w":130,"h":60,"summary":"Plaintext sync, room threading, reactions, edit/delete/upload/read.","crates":["crabgent-channel-matrix"]},{"id":"telegram","label":"Telegram","kind":"adapter","x":55,"y":295,"w":130,"h":60,"summary":"Long polling, direct conversations, voice/audio, reactions, HTML output hint.","crates":["crabgent-channel-telegram"]},{"id":"event","label":"InboundEvent","kind":"boundary","x":260,"y":180,"w":150,"h":75,"summary":"Channel-agnostic body, participants, channel kind, thread root, timestamps, and attrs.","crates":["crabgent-channel"],"surface":["InboundEvent","InboundBody","InboundParticipant"]},{"id":"sanitize","label":"Sanitize + Persona Boundary","kind":"control","x":485,"y":180,"w":190,"h":75,"summary":"Inbound text is length-capped, sanitized, and framed before it becomes LLM-facing content.","crates":["crabgent-channel","crabgent-core"],"surface":["sanitize_for_prompt","INBOUND_BODY_MAX_BYTES"]},{"id":"inbox","label":"KernelChannelInbox","kind":"runtime","x":750,"y":180,"w":180,"h":75,"summary":"Builds RunRequest, resolves session, applies stop patterns, dispatches into Kernel.","crates":["crabgent-channel","crabgent-core","crabgent-session"],"surface":["ChannelInbox","KernelChannelInbox","StopPatternMatcher"]},{"id":"sink","label":"ChannelSink + Router","kind":"boundary","x":750,"y":380,"w":180,"h":75,"summary":"Routes send, read, react, edit, delete, upload, notify_user to registered channel implementations.","crates":["crabgent-channel"],"surface":["ChannelSink","ChannelRouter","MessageRef"]},{"id":"tools","label":"Channel Tools","kind":"tool","x":485,"y":380,"w":190,"h":75,"summary":"LLM-facing channel tools create outbound effects under policy.","crates":["crabgent-channel"],"surface":["channel_send","channel_read","channel_react","channel_notify_user"]},{"id":"progress","label":"Typing + Progress","kind":"runtime","x":260,"y":380,"w":150,"h":75,"summary":"Transport-specific UX signals consume reasoning and tool-progress events without changing the run result.","crates":["crabgent-thinking","crabgent-channel-slack"],"surface":["TypingIndicator","ThinkingHook","ProgressSink"]}],"edges":[{"from":"slack","to":"event","label":"normalize","kind":"flow"},{"from":"matrix","to":"event","label":"normalize","kind":"flow"},{"from":"telegram","to":"event","label":"normalize","kind":"flow"},{"from":"event","to":"sanitize","label":"untrusted text","kind":"policy"},{"from":"sanitize","to":"inbox","label":"safe message","kind":"flow"},{"from":"inbox","to":"tools","label":"run can call","kind":"tool"},{"from":"tools","to":"sink","label":"outbound effect","kind":"tool"},{"from":"sink","to":"slack","label":"send/read/react","kind":"flow"},{"from":"sink","to":"matrix","label":"send/read/react","kind":"flow"},{"from":"sink","to":"telegram","label":"send/read/react","kind":"flow"},{"from":"inbox","to":"progress","label":"events","kind":"runtime"}]},{"id":"context","title":"Context, Identity, Session","subtitle":"Auth identity, persistence identity, conversation state, and model overrides stay separate until a RunRequest is built.","legend":"Identity split is central: Subject is not Owner, and MemoryScope is the scope vector.","nodes":[{"id":"subject","label":"Subject","kind":"control","x":75,"y":125,"w":150,"h":70,"summary":"Auth-facing actor with attrs used by policy and adapters.","crates":["crabgent-core"],"surface":["Subject"]},{"id":"owner","label":"Owner","kind":"state","x":75,"y":285,"w":150,"h":70,"summary":"Persistence identity for sessions, memory, cron, and scoped data.","crates":["crabgent-core"],"surface":["Owner"]},{"id":"scope","label":"MemoryScope","kind":"state","x":285,"y":285,"w":165,"h":70,"summary":"Single reusable scope vector across memory and cron filtering.","crates":["crabgent-core","crabgent-memory","crabgent-cron"],"surface":["MemoryScope"]},{"id":"session","label":"SessionManager","kind":"runtime","x":515,"y":125,"w":175,"h":70,"summary":"Finds or creates the conversation session and prepends durable history.","crates":["crabgent-session","crabgent-store"],"surface":["SessionManager","SessionStore","SessionId"]},{"id":"persist","label":"SessionPersistHook","kind":"control","x":515,"y":285,"w":175,"h":70,"summary":"Persists canonical run messages, including compacted views and channel outbound fan-out.","crates":["crabgent-session"],"surface":["SessionPersistHook"]},{"id":"model","label":"Model Override","kind":"llm","x":750,"y":125,"w":180,"h":70,"summary":"Session and global model overrides are stored and validated through the model tool surface.","crates":["crabgent-tool-models","crabgent-store","crabgent-command-model"],"surface":["ModelRegistryTool","session.model_override"]},{"id":"runrequest","label":"RunRequest","kind":"runtime","x":750,"y":285,"w":180,"h":70,"summary":"Kernel-facing request carries messages, model, subject, cancel handles, and runtime metadata.","crates":["crabgent-core","crabgent-channel"],"surface":["RunRequest","LlmRequest","RunCtx"]}],"edges":[{"from":"subject","to":"session","label":"auth attrs","kind":"flow"},{"from":"owner","to":"scope","label":"scope owner","kind":"state"},{"from":"scope","to":"session","label":"conversation scope","kind":"state"},{"from":"session","to":"runrequest","label":"history","kind":"flow"},{"from":"model","to":"runrequest","label":"selected model","kind":"llm"},{"from":"runrequest","to":"persist","label":"canonical messages","kind":"state"},{"from":"persist","to":"session","label":"save","kind":"state"}]},{"id":"policy-hooks","title":"Policy And Hook Mesh","subtitle":"Policy decides whether a side effect may happen. Hooks enrich and observe the run while respecting explicit cancellation.","legend":"Deny is terminal. Replace mutates the typed value. Continue keeps the chain moving.","nodes":[{"id":"action","label":"Action","kind":"policy","x":70,"y":165,"w":145,"h":70,"summary":"Typed description of the side effect or query being requested.","crates":["crabgent-core"],"surface":["Action"]},{"id":"policy","label":"PolicyHook","kind":"policy","x":285,"y":165,"w":165,"h":70,"summary":"Fail-closed policy surface. KernelBuilder requires one before build.","crates":["crabgent-core"],"surface":["PolicyHook","StrictPolicy","DenyAllPolicy"]},{"id":"chain","label":"HookChain","kind":"control","x":520,"y":165,"w":165,"h":70,"summary":"FIFO composition over before_llm, after_llm, tool, event, and shutdown hook points.","crates":["crabgent-core"],"surface":["Hook","HookChain","Decision"]},{"id":"time","label":"TimeHint","kind":"control","x":760,"y":75,"w":145,"h":60,"summary":"Adds current time, weekday, timezone, and holiday hints to system prompt.","crates":["crabgent-calendar"],"surface":["TimeHintHook"]},{"id":"compact","label":"Compact","kind":"control","x":760,"y":165,"w":145,"h":60,"summary":"Token-aware semantic compaction with continuity, archive-before-compact, and per-run serialization.","crates":["crabgent-hook-compact"],"surface":["CompactHook"]},{"id":"inject","label":"Inject","kind":"control","x":760,"y":255,"w":145,"h":60,"summary":"Runtime message injection keyed by RunId.","crates":["crabgent-hook-inject"],"surface":["InjectHook"]},{"id":"observe","label":"Log + Thinking","kind":"runtime","x":520,"y":360,"w":165,"h":70,"summary":"Events and reasoning deltas become logging and user-visible progress signals.","crates":["crabgent-hook-log","crabgent-thinking"],"surface":["Event","ThinkingHook"]},{"id":"cancel","label":"Cancel Root","kind":"runtime","x":285,"y":360,"w":165,"h":70,"summary":"Hooks, stop patterns, or external callers cancel through RunCtx and carry CancelReason.","crates":["crabgent-core","crabgent-channel"],"surface":["RunCtx","CancelReason"]},{"id":"kernel","label":"Kernel Loop","kind":"runtime","x":70,"y":360,"w":145,"h":70,"summary":"The only place that turns policy, hooks, provider calls, and tool loops into a run result.","crates":["crabgent-core"],"surface":["Kernel","run","run_streaming"]}],"edges":[{"from":"action","to":"policy","label":"gate","kind":"policy"},{"from":"policy","to":"chain","label":"allowed","kind":"policy"},{"from":"chain","to":"time","label":"before_llm","kind":"flow"},{"from":"chain","to":"compact","label":"pre_compact","kind":"flow"},{"from":"chain","to":"inject","label":"replace/inject","kind":"flow"},{"from":"chain","to":"observe","label":"events","kind":"runtime"},{"from":"chain","to":"cancel","label":"ctx.cancel","kind":"runtime"},{"from":"cancel","to":"kernel","label":"stop cleanly","kind":"runtime"},{"from":"kernel","to":"action","label":"next side effect","kind":"flow"}]},{"id":"providers","title":"Provider, Model, Media","subtitle":"The kernel speaks provider-neutral types. Provider crates own model discovery, wire shape, auth, retries, and model-specific media reshaping.","legend":"Model capabilities are the guardrail between a RunRequest and a provider wire body.","nodes":[{"id":"registry","label":"ModelRegistry","kind":"llm","x":70,"y":145,"w":160,"h":70,"summary":"Catalog of ModelInfo and ModelCapabilities used for validation and overrides.","crates":["crabgent-core","crabgent-tool-models"],"surface":["ModelRegistry","ModelInfo","ModelCapabilities"]},{"id":"request","label":"LlmRequest","kind":"runtime","x":300,"y":145,"w":150,"h":70,"summary":"Provider-neutral message, model, tool, image/audio, and reasoning request shape.","crates":["crabgent-core"],"surface":["LlmRequest"]},{"id":"provider","label":"Provider Trait","kind":"llm","x":520,"y":145,"w":155,"h":70,"summary":"Common complete, stream, capabilities, and models surface.","crates":["crabgent-core"],"surface":["Provider","ProviderCapabilities"]},{"id":"transport","label":"Transport Helpers","kind":"boundary","x":745,"y":145,"w":165,"h":70,"summary":"Cancellation-aware HTTP retries, auth classification, capped body reads.","crates":["crabgent-provider-transport"],"surface":["retry_after","read_body_capped"]},{"id":"anthropic","label":"Anthropic","kind":"adapter","x":285,"y":330,"w":145,"h":60,"summary":"Streaming, prompt caching, model discovery, and Anthropic wire format.","crates":["crabgent-provider-anthropic"]},{"id":"openai","label":"OpenAI","kind":"adapter","x":480,"y":330,"w":145,"h":60,"summary":"Chat Completions, Responses/Codex OAuth, prompt caching, STT.","crates":["crabgent-provider-openai"]},{"id":"google","label":"Google","kind":"adapter","x":675,"y":330,"w":145,"h":60,"summary":"Gemini discovery, generateContent, image-generation support.","crates":["crabgent-provider-google"]},{"id":"stt","label":"STT + Embedding","kind":"llm","x":70,"y":330,"w":165,"h":60,"summary":"Speech-to-text and local embedding provider traits extend the same provider-neutral pattern.","crates":["crabgent-core","crabgent-provider-elevenlabs","crabgent-embedding-fastembed"],"surface":["SttProvider","EmbeddingProvider"]}],"edges":[{"from":"registry","to":"request","label":"validated model","kind":"llm"},{"from":"request","to":"provider","label":"complete/stream","kind":"flow"},{"from":"provider","to":"transport","label":"HTTP","kind":"boundary"},{"from":"provider","to":"anthropic","label":"wire reshape","kind":"flow"},{"from":"provider","to":"openai","label":"wire reshape","kind":"flow"},{"from":"provider","to":"google","label":"wire reshape","kind":"flow"},{"from":"request","to":"stt","label":"audio / embeddings","kind":"llm"}]},{"id":"tools","title":"Tool Execution Mesh","subtitle":"LLM tool calls become typed args, policy-gated actions, tool results, cached output, and sometimes channel or persistence effects.","legend":"Every tool has Args + Op + TOOL_NAME + schema + execute. ToolCtx carries trusted runtime context.","nodes":[{"id":"call","label":"ToolCall","kind":"tool","x":65,"y":175,"w":135,"h":65,"summary":"Provider-originated tool name and JSON args.","crates":["crabgent-core"],"surface":["ToolCall"]},{"id":"parse","label":"Args + Op","kind":"tool","x":260,"y":175,"w":145,"h":65,"summary":"Serde parses one operation enum and validates required fields.","crates":["crabgent-tool-memory","crabgent-tool-cron","crabgent-tool-task","crabgent-tool-models"],"surface":["Args","Op"]},{"id":"ctx","label":"ToolCtx","kind":"runtime","x":465,"y":175,"w":145,"h":65,"summary":"Subject, session, tool roots, current model context, and policy-visible metadata.","crates":["crabgent-core"],"surface":["ToolCtx"]},{"id":"gate","label":"Action Gate","kind":"policy","x":670,"y":175,"w":145,"h":65,"summary":"Tool-specific Action goes through PolicyHook before execution.","crates":["crabgent-core"],"surface":["gate_tool_action","Action"]},{"id":"result","label":"ToolResult","kind":"tool","x":875,"y":175,"w":145,"h":65,"summary":"Result can be normal, error-shaped, cache reference, or channel outbound signal.","crates":["crabgent-core"],"surface":["ToolResult"]},{"id":"memory","label":"Memory Tools","kind":"state","x":90,"y":350,"w":155,"h":60,"summary":"Search, store, get, delete, archive, unarchive, expiry, forget.","crates":["crabgent-tool-memory"]},{"id":"ops","label":"Calendar / Cron / Task","kind":"runtime","x":300,"y":350,"w":180,"h":60,"summary":"Date operations, cron CRUD, background task create/list/get/cancel.","crates":["crabgent-tool-calendar","crabgent-tool-cron","crabgent-tool-task"]},{"id":"model","label":"Model Tool","kind":"llm","x":535,"y":350,"w":155,"h":60,"summary":"List, get, current, set/clear session override, set/clear global override.","crates":["crabgent-tool-models"]},{"id":"channel","label":"Channel Tools","kind":"boundary","x":745,"y":350,"w":155,"h":60,"summary":"Send, read, react, edit, delete, upload, notify_user.","crates":["crabgent-channel"]},{"id":"cache","label":"Tool Cache","kind":"control","x":955,"y":350,"w":145,"h":60,"summary":"Large tool output is replaced with cache pointers and read back by cache_read.","crates":["crabgent-tool-cache"],"surface":["ToolCacheHook","CacheReadTool"]}],"edges":[{"from":"call","to":"parse","label":"JSON args","kind":"tool"},{"from":"parse","to":"ctx","label":"typed args","kind":"tool"},{"from":"ctx","to":"gate","label":"subject","kind":"policy"},{"from":"gate","to":"result","label":"execute","kind":"tool"},{"from":"parse","to":"memory","label":"op family","kind":"state"},{"from":"parse","to":"ops","label":"op family","kind":"runtime"},{"from":"parse","to":"model","label":"op family","kind":"llm"},{"from":"parse","to":"channel","label":"op family","kind":"boundary"},{"from":"result","to":"cache","label":"large output","kind":"state"}]},{"id":"memory","title":"Memory Lifecycle","subtitle":"Memory is not one bag of strings. Class, scope, recall strategy, embedding, lifecycle, consolidation, and store backend all stay explicit.","legend":"Semantic category is MemoryClass. Conversation kind is not class.","nodes":[{"id":"classes","label":"MemoryClass","kind":"state","x":70,"y":110,"w":165,"h":70,"summary":"Semantic, episodic, recency, notes, user_profile, skill, tools.","crates":["crabgent-memory","crabgent-core"],"surface":["MemoryClass"]},{"id":"scope","label":"MemoryScope","kind":"state","x":305,"y":110,"w":165,"h":70,"summary":"Owner, channel, thread scope reused across memory and cron.","crates":["crabgent-core"]},{"id":"recall","label":"Recall Strategy","kind":"runtime","x":540,"y":110,"w":175,"h":70,"summary":"Blended FTS, importance, recency decay, and embeddings produce ranked recall.","crates":["crabgent-memory"],"surface":["RecallStrategy","DecayPolicy","BlendWeights"]},{"id":"embed","label":"Embeddings","kind":"llm","x":785,"y":110,"w":160,"h":70,"summary":"Optional provider-backed vectors augment FTS in tool and store paths.","crates":["crabgent-core","crabgent-embedding-fastembed"],"surface":["EmbeddingProvider"]},{"id":"tool","label":"Memory Tool","kind":"tool","x":70,"y":305,"w":165,"h":70,"summary":"LLM-facing search/store/get/delete/archive/unarchive/extend/forget lifecycle.","crates":["crabgent-tool-memory"],"surface":["MemoryTool"]},{"id":"store","label":"MemoryStore","kind":"state","x":305,"y":305,"w":165,"h":70,"summary":"In-memory, SQLite, and Postgres implement the same memory persistence contract.","crates":["crabgent-store","crabgent-store-sqlite","crabgent-store-postgres"],"surface":["MemoryStore"]},{"id":"consolidate","label":"Consolidation","kind":"runtime","x":540,"y":305,"w":175,"h":70,"summary":"Extraction, deduplication, conflict resolution, stale cleanup, audit, checkpoint.","crates":["crabgent-memory-consolidation","crabgent-tool-consolidation"],"surface":["ConsolidationRunner"]},{"id":"persist","label":"Persist Hook","kind":"control","x":785,"y":305,"w":160,"h":70,"summary":"Optional hook turns run messages into memory records under policy and scope.","crates":["crabgent-memory"],"surface":["MemoryPersistHook"]}],"edges":[{"from":"classes","to":"recall","label":"strategy","kind":"state"},{"from":"scope","to":"recall","label":"filter","kind":"state"},{"from":"embed","to":"recall","label":"vector","kind":"llm"},{"from":"tool","to":"store","label":"CRUD","kind":"tool"},{"from":"store","to":"recall","label":"ranked hits","kind":"state"},{"from":"store","to":"consolidate","label":"candidate set","kind":"state"},{"from":"consolidate","to":"store","label":"cleaned facts","kind":"state"},{"from":"persist","to":"store","label":"new records","kind":"state"}]},{"id":"scheduling","title":"Time, Jobs, Tasks","subtitle":"Temporal context and deferred execution are explicit surfaces, not hidden loops inside the kernel.","legend":"Calendar answers time questions. Cron schedules prompts. Task runs controlled background work.","nodes":[{"id":"timehint","label":"TimeHintHook","kind":"control","x":80,"y":135,"w":170,"h":70,"summary":"Injects now, weekday, timezone, holiday, and authoring-time guidance.","crates":["crabgent-calendar"],"surface":["TimeHintHook","TimeHintConfig"]},{"id":"calendar","label":"Calendar Tool","kind":"tool","x":330,"y":135,"w":170,"h":70,"summary":"Holiday list/next/check, days_between, date arithmetic, weekday info.","crates":["crabgent-tool-calendar","crabgent-calendar"],"surface":["CalendarTool","HolidayProvider"]},{"id":"cron","label":"Cron Tool","kind":"tool","x":80,"y":325,"w":170,"h":70,"summary":"LLM-facing create/list/get/update/delete/pause/resume schedule surface.","crates":["crabgent-tool-cron","crabgent-cron"],"surface":["CronTool"]},{"id":"scheduler","label":"CronScheduler","kind":"runtime","x":330,"y":325,"w":170,"h":70,"summary":"Claims due jobs, runs prompts through executor, drains on shutdown.","crates":["crabgent-cron"],"surface":["CronScheduler","CronJob"]},{"id":"tasktool","label":"Task Tool","kind":"tool","x":595,"y":135,"w":170,"h":70,"summary":"Create, list, get, cancel with context injection and optional blocking wait.","crates":["crabgent-tool-task"],"surface":["TaskTool"]},{"id":"executor","label":"TaskExecutor","kind":"runtime","x":595,"y":325,"w":170,"h":70,"summary":"Depth cap, parallel cap, cancellation propagation, parent_task_id propagation.","crates":["crabgent-task"],"surface":["TaskExecutor","TaskRequest"]},{"id":"store","label":"Scoped Store","kind":"state","x":855,"y":230,"w":165,"h":70,"summary":"Cron and task metadata persist behind stores using Owner/MemoryScope vocabulary.","crates":["crabgent-store","crabgent-store-sqlite","crabgent-store-postgres"],"surface":["CronStore","TaskStore"]}],"edges":[{"from":"timehint","to":"calendar","label":"time facts","kind":"flow"},{"from":"calendar","to":"cron","label":"schedule math","kind":"tool"},{"from":"cron","to":"scheduler","label":"job CRUD","kind":"tool"},{"from":"scheduler","to":"executor","label":"run prompt","kind":"runtime"},{"from":"tasktool","to":"executor","label":"task request","kind":"tool"},{"from":"scheduler","to":"store","label":"jobs","kind":"state"},{"from":"executor","to":"store","label":"task state","kind":"state"}]},{"id":"mcp","title":"MCP Bridge","subtitle":"crabgent can consume remote MCP tools and expose its own tools plus chat through the MCP server surface.","legend":"Client and server are separate boundaries around the same tool/kernel concepts.","nodes":[{"id":"remote","label":"Remote MCP Server","kind":"boundary","x":70,"y":150,"w":180,"h":70,"summary":"External Streamable HTTP/SSE server with its own tool catalog."},{"id":"client","label":"MCP Client","kind":"adapter","x":330,"y":150,"w":170,"h":70,"summary":"Discovers tools, prefixes names, wraps remote calls as crabgent tools.","crates":["crabgent-mcp-client"],"surface":["McpClientBuilder","McpServerConfig"]},{"id":"kerneltools","label":"Kernel Tools","kind":"tool","x":585,"y":150,"w":170,"h":70,"summary":"Registered Tool trait objects exposed to providers and optionally MCP server.","crates":["crabgent-core"],"surface":["Tool","Kernel::tools"]},{"id":"jsonrpc","label":"JSON-RPC Dispatch","kind":"boundary","x":70,"y":340,"w":180,"h":70,"summary":"Bearer-authenticated MCP server request handling and SSE helpers.","crates":["crabgent-mcp-server"],"surface":["handle_json_rpc","ToolFilter"]},{"id":"sessions","label":"MCP Sessions","kind":"state","x":330,"y":340,"w":170,"h":70,"summary":"UUIDv7 session registry, bounded LRU, per-session cancellation token.","crates":["crabgent-mcp-server"],"surface":["McpSessionRegistry","McpSessionEntry"]},{"id":"chat","label":"Native Chat Tool","kind":"runtime","x":585,"y":340,"w":170,"h":70,"summary":"MCP chat dispatch builds a RunRequest and calls the kernel with session cancellation.","crates":["crabgent-mcp-server","crabgent-core"],"surface":["chat","RunRequest"]},{"id":"kernel","label":"Kernel","kind":"runtime","x":835,"y":245,"w":150,"h":70,"summary":"Shared execution core for chat and tool calls.","crates":["crabgent-core"],"surface":["Kernel"]}],"edges":[{"from":"remote","to":"client","label":"discover/call","kind":"boundary"},{"from":"client","to":"kerneltools","label":"proxied Tool","kind":"tool"},{"from":"jsonrpc","to":"sessions","label":"session id","kind":"state"},{"from":"jsonrpc","to":"kerneltools","label":"tools/list call","kind":"tool"},{"from":"sessions","to":"chat","label":"entry + token","kind":"state"},{"from":"chat","to":"kernel","label":"RunRequest","kind":"runtime"},{"from":"kerneltools","to":"kernel","label":"execute","kind":"tool"}]},{"id":"media","title":"Vision And Audio","subtitle":"Bytes become typed payloads at channel boundaries. Providers do model-specific wire reshaping without revalidating trust-boundary decisions.","legend":"Validation belongs near ingress. Base64 and provider-specific layout are wire details.","nodes":[{"id":"channel","label":"Channel Files","kind":"boundary","x":70,"y":160,"w":160,"h":70,"summary":"Adapters receive files, images, voice, and audio from outside transports.","crates":["crabgent-channel-slack","crabgent-channel-matrix","crabgent-channel-telegram"]},{"id":"validate","label":"Validate + Cache","kind":"control","x":300,"y":160,"w":180,"h":70,"summary":"MIME, size, magic-byte, and filesystem storage happen before kernel/provider handoff.","crates":["crabgent-channel","crabgent-core"],"surface":["ImageValidator","AudioValidator","FileSystemImageStore"]},{"id":"payload","label":"Typed Payloads","kind":"runtime","x":550,"y":160,"w":170,"h":70,"summary":"ImagePayload, AudioPayload, and FilePayload travel as typed content blocks.","crates":["crabgent-core"],"surface":["ImagePayload","AudioPayload","ContentBlock"]},{"id":"preflight","label":"Capability Preflight","kind":"policy","x":790,"y":160,"w":180,"h":70,"summary":"Kernel checks model capability before sending vision/audio to a provider.","crates":["crabgent-core"],"surface":["ModelCapabilities","VisionUnsupported","AudioUnsupported"]},{"id":"reshape","label":"Provider Reshape","kind":"llm","x":300,"y":350,"w":180,"h":70,"summary":"Providers map typed payloads into wire-specific multipart, JSON, or content arrays.","crates":["crabgent-provider-openai","crabgent-provider-anthropic","crabgent-provider-google"]},{"id":"stt","label":"Speech To Text","kind":"llm","x":550,"y":350,"w":170,"h":70,"summary":"STT inbox and providers turn audio into transcript-prefixed text.","crates":["crabgent-core","crabgent-provider-elevenlabs","crabgent-provider-openai"],"surface":["SttProvider","SttInbox"]},{"id":"llm","label":"LLM Request","kind":"runtime","x":790,"y":350,"w":180,"h":70,"summary":"Final model request receives typed media or transcript text depending on capability and path.","crates":["crabgent-core"],"surface":["LlmRequest"]}],"edges":[{"from":"channel","to":"validate","label":"untrusted bytes","kind":"policy"},{"from":"validate","to":"payload","label":"typed payload","kind":"flow"},{"from":"payload","to":"preflight","label":"model check","kind":"policy"},{"from":"preflight","to":"reshape","label":"supported","kind":"llm"},{"from":"preflight","to":"stt","label":"transcribe","kind":"llm"},{"from":"reshape","to":"llm","label":"wire body","kind":"flow"},{"from":"stt","to":"llm","label":"transcript","kind":"flow"}]},{"id":"stores","title":"Persistence Backplane","subtitle":"Storage is a set of trait contracts. Runtime code depends on stores, not on a specific database.","legend":"In-memory is the default. SQLite is local durable. Postgres is opt-in and heavier.","nodes":[{"id":"traits","label":"Store Traits","kind":"state","x":70,"y":210,"w":170,"h":70,"summary":"SessionStore, MemoryStore, CronStore, ToolCacheStore and record types.","crates":["crabgent-store"],"surface":["SessionStore","MemoryStore","CronStore","ToolCacheStore"]},{"id":"memory","label":"Memory Records","kind":"state","x":315,"y":95,"w":170,"h":65,"summary":"FTS, importance, recency, embedding, archive, expiry.","crates":["crabgent-store"]},{"id":"session","label":"Session Records","kind":"state","x":315,"y":210,"w":170,"h":65,"summary":"Messages, thread/session ids, model override, search.","crates":["crabgent-store"]},{"id":"cron","label":"Cron + Cache","kind":"state","x":315,"y":325,"w":170,"h":65,"summary":"Scoped cron jobs and tool-output cache records.","crates":["crabgent-store"]},{"id":"memorybackend","label":"In-Memory","kind":"adapter","x":565,"y":95,"w":160,"h":65,"summary":"Fast default backend for tests and local simple deployments.","crates":["crabgent-store"]},{"id":"sqlite","label":"SQLite","kind":"adapter","x":565,"y":210,"w":160,"h":65,"summary":"Single-node durable backend with embedded migrations.","crates":["crabgent-store-sqlite"]},{"id":"postgres","label":"Postgres","kind":"adapter","x":565,"y":325,"w":160,"h":65,"summary":"Opt-in backend with native types, migrations, tsvector FTS and vector search.","crates":["crabgent-store-postgres"]},{"id":"runtime","label":"Runtime Users","kind":"runtime","x":800,"y":210,"w":170,"h":70,"summary":"Session manager, memory tools, cron scheduler, cache hook consume the trait contracts.","crates":["crabgent-session","crabgent-memory","crabgent-cron","crabgent-tool-cache"]}],"edges":[{"from":"traits","to":"memory","label":"records","kind":"state"},{"from":"traits","to":"session","label":"records","kind":"state"},{"from":"traits","to":"cron","label":"records","kind":"state"},{"from":"memory","to":"memorybackend","label":"impl","kind":"state"},{"from":"session","to":"sqlite","label":"impl","kind":"state"},{"from":"cron","to":"postgres","label":"impl","kind":"state"},{"from":"memorybackend","to":"runtime","label":"trait object","kind":"flow"},{"from":"sqlite","to":"runtime","label":"trait object","kind":"flow"},{"from":"postgres","to":"runtime","label":"trait object","kind":"flow"}]},{"id":"lifecycle","title":"Cancellation And Shutdown","subtitle":"crabgent separates run cancellation, stop-pattern attribution, task drains, and kernel shutdown instead of hiding lifecycle in ad hoc booleans.","legend":"Cancellation has a root and a reason. Shutdown has a grace period and drain semantics.","nodes":[{"id":"external","label":"External Token","kind":"boundary","x":70,"y":135,"w":170,"h":70,"summary":"Caller-supplied cancellation token for run or stream.","crates":["crabgent-core"],"surface":["RunRequest.cancel"]},{"id":"stop","label":"Stop Pattern","kind":"boundary","x":70,"y":310,"w":170,"h":70,"summary":"Channel messages like stop/cancel map to explicit CancelReason.","crates":["crabgent-channel"],"surface":["StopPatternMatcher"]},{"id":"ctx","label":"RunCtx Cancel","kind":"runtime","x":315,"y":220,"w":170,"h":70,"summary":"Shared cancellation cell plus OnceLock reason visible to hooks and observers.","crates":["crabgent-core"],"surface":["RunCtx","CancelReason"]},{"id":"kernel","label":"Kernel Loop","kind":"runtime","x":565,"y":220,"w":170,"h":70,"summary":"Stops cooperatively and returns typed cancellation or shutdown errors.","crates":["crabgent-core"],"surface":["KernelError::Cancelled","KernelError::ShuttingDown"]},{"id":"tasks","label":"Task / Cron Drains","kind":"runtime","x":810,"y":135,"w":180,"h":70,"summary":"Background executors and schedulers obey cancellation and shutdown grace.","crates":["crabgent-task","crabgent-cron"],"surface":["TaskExecutor","CronScheduler::shutdown"]},{"id":"channel","label":"Inbox Shutdown","kind":"boundary","x":810,"y":310,"w":180,"h":70,"summary":"ChannelInbox shutdown forwards grace through decorators to lifecycle-aware inboxes.","crates":["crabgent-channel"],"surface":["ChannelInbox::shutdown","InboxLifecycle"]},{"id":"log","label":"Shutdown Hooks","kind":"control","x":565,"y":410,"w":170,"h":70,"summary":"Hook notifications distinguish normal drain, cancelled task, and panic during shutdown.","crates":["crabgent-core","crabgent-hook-log"],"surface":["Hook::on_kernel_shutdown"]}],"edges":[{"from":"external","to":"ctx","label":"cancel","kind":"runtime"},{"from":"stop","to":"ctx","label":"reason","kind":"runtime"},{"from":"ctx","to":"kernel","label":"observe","kind":"runtime"},{"from":"kernel","to":"tasks","label":"drain","kind":"runtime"},{"from":"kernel","to":"channel","label":"grace","kind":"runtime"},{"from":"kernel","to":"log","label":"shutdown event","kind":"runtime"}]}],"capabilityGroups":[{"id":"core","label":"Core Runtime","crates":["crabgent-core","crabgent-log"]},{"id":"providers","label":"Providers","crates":["crabgent-provider-anthropic","crabgent-provider-openai","crabgent-provider-google","crabgent-provider-transport","crabgent-provider-elevenlabs","crabgent-embedding-fastembed"]},{"id":"channels","label":"Channels","crates":["crabgent-channel","crabgent-channel-slack","crabgent-channel-matrix","crabgent-channel-telegram","crabgent-thinking"]},{"id":"tools","label":"Tools","crates":["crabgent-tool-memory","crabgent-tool-calendar","crabgent-tool-cron","crabgent-tool-task","crabgent-tool-models","crabgent-tool-cache","crabgent-tool-session","crabgent-tool-consolidation"]},{"id":"state","label":"State","crates":["crabgent-store","crabgent-store-sqlite","crabgent-store-postgres","crabgent-memory","crabgent-memory-consolidation","crabgent-session"]},{"id":"automation","label":"Automation","crates":["crabgent-calendar","crabgent-cron","crabgent-task"]},{"id":"integration","label":"Integration","crates":["crabgent-mcp-client","crabgent-mcp-server","crabgent-command","crabgent-command-model","crabgent-command-compact"]},{"id":"hooks","label":"Hooks","crates":["crabgent-hook-compact","crabgent-hook-inject","crabgent-hook-log","crabgent-hook-subprocess"]},{"id":"support","label":"Support","crates":["crabgent-examples"]}],"generated":{"workspacePackageCount":40,"source":{"cargoMetadata":"cargo metadata --no-deps --format-version 1","project":"PROJECT.md","map":"tools/architecture-docs/map.json"}},"crates":{"crabgent-provider-anthropic":{"name":"crabgent-provider-anthropic","version":"0.0.1","path":"crabgent-provider-anthropic","manifest":"crabgent-provider-anthropic/Cargo.toml","purpose":"Anthropic provider with streaming, retry handling, prompt caching, model discovery, and cached model metadata","group":"providers","dependencies":["crabgent-core","crabgent-log","crabgent-provider-transport"],"dependedBy":[],"surface":{"traits":[],"structs":["AnthropicClient","AnthropicProvider","SseError","ParserLimits","SseParser","AnthropicConfig"],"enums":["ConfigError","RequestBuildError","RetryableStreamErrorKind","TtlError"],"tools":[],"actions":[]}},"crabgent-calendar":{"name":"crabgent-calendar","version":"0.0.1","path":"crabgent-calendar","manifest":"crabgent-calendar/Cargo.toml","purpose":"Calendar and holiday domain with embedded holiday data and `TimeHintHook`","group":"automation","dependencies":["crabgent-core","crabgent-log"],"dependedBy":["crabgent-tool-calendar"],"surface":{"traits":["HolidayProvider"],"structs":["TimeHintConfig","TimeHintHook","EmbeddedHolidayProvider"],"enums":["PauseMarker"],"tools":[],"actions":[]}},"crabgent-channel":{"name":"crabgent-channel","version":"0.0.1","path":"crabgent-channel","manifest":"crabgent-channel/Cargo.toml","purpose":"Channel traits, tools, routing, participants, pairing, recording inbox, webhook traits, inbound sanitize, persona boundary, formatting hints, and stop-pattern cancellation","group":"channels","dependencies":["crabgent-core","crabgent-hook-inject","crabgent-log"],"dependedBy":["crabgent-channel-matrix","crabgent-channel-slack","crabgent-channel-telegram","crabgent-command","crabgent-command-compact","crabgent-command-model","crabgent-examples"],"surface":{"traits":["Channel","ImageStore","ChannelInbox","PairingStore","InboundRecorder","ChannelSink","ChannelSubjectExt","WebhookHandler","SignatureVerify"],"structs":["AudioValidator","ReadMessage","MessageRef","OutboundMessage","InboundEvent","InboundReaction","FileSystemImageStoreConfig","FileSystemImageStore","ImageRef","ImageValidator","InboundParticipant","InboundBody","InboundEventBuilder","KernelChannelInbox"],"enums":["AudioRejection","ChannelKind","MessageKind","ChannelError","ImageStoreError","ImageRejection","ClaimResult","AudioAssemblyError","ParticipantRole","DirectRole","RecordDecision"],"tools":["channel_delete","channel_edit","notify_user","channel_react","channel_read","channel_upload"],"actions":["ChannelSend","ChannelReceive","ChannelListParticipants","tool"]}},"crabgent-channel-matrix":{"name":"crabgent-channel-matrix","version":"0.0.1","path":"crabgent-channel-matrix","manifest":"crabgent-channel-matrix/Cargo.toml","purpose":"Matrix adapter with plaintext sync, threading, reactions, edit/delete/upload/read, v1 media, audio, sanitize, typing, and HTML output hint","group":"channels","dependencies":["crabgent-channel","crabgent-command","crabgent-core","crabgent-log","crabgent-store","crabgent-thinking"],"dependedBy":[],"surface":{"traits":[],"structs":["MatrixChannel","MatrixChannelConfig","TrackedReaction","ReactionTracker","MatrixSyncPoller","MatrixTypingIndicator"],"enums":["AudioDownloadError","MatrixAuth","MatrixChannelError","ImageDownloadError"],"tools":[],"actions":["custom"]}},"crabgent-channel-slack":{"name":"crabgent-channel-slack","version":"0.0.1","path":"crabgent-channel-slack","manifest":"crabgent-channel-slack/Cargo.toml","purpose":"Slack Socket Mode adapter with Web API tools, search, thread broadcast, audio, subject-locked replies, typing stub, mrkdwn output hint, and agent-progress hook (V2 `assistant.threads.setStatus` plus V3 `chat.startStream`/`chat.appendStream`/`chat.stopStream`, V1 typing stub stays)","group":"channels","dependencies":["crabgent-channel","crabgent-channel-slack","crabgent-command","crabgent-core","crabgent-log","crabgent-store","crabgent-thinking"],"dependedBy":["crabgent-channel-slack","crabgent-examples"],"surface":{"traits":["SlackAgentProgress","SlackEventListener","SocketModeClient"],"structs":["SlackAgentProgressHook","SlackAgentProgressIndicator","AgentProgressConfig","NoopSlackAgentProgress","SlackMessageResponse","ConversationsHistoryResponse","ConversationsRepliesResponse","ConversationInfo","ConversationsMembersResponse","SlackUserInfo","UsersConversationsResponse","UserGroupUsersListResponse","ReactionResponse","FilesGetUploadUrlResponse"],"enums":["AgentProgressError","ProgressChunk","SlackAppType","ConversationType","TaskStatus","StreamChunk","SlackConfigError","SlackError","SlackEvent","FilesInfoError","ParseSlackOwnerError","ImageDownloadError","SocketModeFrame"],"tools":["slack_search"],"actions":["custom","tool"]}},"crabgent-channel-telegram":{"name":"crabgent-channel-telegram","version":"0.0.1","path":"crabgent-channel-telegram","manifest":"crabgent-channel-telegram/Cargo.toml","purpose":"Telegram direct adapter with long polling, reactions, edit/delete/upload, voice/audio, sanitize, typing, and HTML output hint","group":"channels","dependencies":["crabgent-channel","crabgent-command","crabgent-core","crabgent-log","crabgent-store","crabgent-thinking"],"dependedBy":[],"surface":{"traits":[],"structs":["TelegramChannel","SendMessageBody","TelegramFormattedText","PhotoSize","TelegramMessageReactionUpdated","TelegramPoller","TelegramTypingIndicator"],"enums":["AudioDownloadError","ImageDownloadError","TelegramReactionType"],"tools":[],"actions":["custom"]}},"crabgent-command":{"name":"crabgent-command","version":"0.0.1","path":"crabgent-command","manifest":"crabgent-command/Cargo.toml","purpose":"Adapter-neutral command dispatch framework with `Command`, `CommandPrefix`, `CommandRegistry`, `ToolCommand`, record-without-run persistence, and two-layer policy gating","group":"integration","dependencies":["crabgent-channel","crabgent-core","crabgent-store"],"dependedBy":["crabgent-channel-matrix","crabgent-channel-slack","crabgent-channel-telegram","crabgent-command-compact","crabgent-command-model"],"surface":{"traits":["Command"],"structs":["CommandCtx","CommandOutput","CommandHandles","CommandDispatchInbox","CommandName","CommandPrefix","CommandRegistry","ToolCommand","CommandWiring"],"enums":["CommandNameError","CommandPrefixError","CommandError"],"tools":[],"actions":["ToolCall","custom","tool"]}},"crabgent-command-compact":{"name":"crabgent-command-compact","version":"0.0.1","path":"crabgent-command-compact","manifest":"crabgent-command-compact/Cargo.toml","purpose":"`/compact` command bridge to `CompactHook::compact_session`","group":"integration","dependencies":["crabgent-channel","crabgent-command","crabgent-core","crabgent-hook-compact","crabgent-store"],"dependedBy":[],"surface":{"traits":[],"structs":["CompactCommand"],"enums":[],"tools":[],"actions":["custom"]}},"crabgent-command-model":{"name":"crabgent-command-model","version":"0.0.1","path":"crabgent-command-model","manifest":"crabgent-command-model/Cargo.toml","purpose":"`/model` command bridge over `crabgent-tool-models` with CLI parsing and tool-owned validation","group":"integration","dependencies":["crabgent-channel","crabgent-command","crabgent-core","crabgent-store","crabgent-tool-models"],"dependedBy":[],"surface":{"traits":[],"structs":["ModelCommand"],"enums":["CliArgs"],"tools":[],"actions":["ModelList","ModelGet","ModelsSetSessionOverride"]}},"crabgent-core":{"name":"crabgent-core","version":"0.0.1","path":"crabgent-core","manifest":"crabgent-core/Cargo.toml","purpose":"Kernel, run loop, provider/tool/hook/policy/model surfaces, image-generation and STT surfaces, text helpers, sanitize wrapper, STT and vision pre-flights, and domain types","group":"core","dependencies":[],"dependedBy":["crabgent-provider-anthropic","crabgent-calendar","crabgent-channel","crabgent-channel-matrix","crabgent-channel-slack","crabgent-channel-telegram","crabgent-command","crabgent-command-compact","crabgent-command-model","crabgent-cron","crabgent-embedding-fastembed","crabgent-examples","crabgent-provider-google","crabgent-hook-compact","crabgent-hook-inject","crabgent-hook-log","crabgent-hook-subprocess","crabgent-mcp-client","crabgent-mcp-server","crabgent-memory","crabgent-memory-consolidation","crabgent-provider-openai","crabgent-session","crabgent-store","crabgent-store-postgres","crabgent-store-sqlite","crabgent-provider-elevenlabs","crabgent-task","crabgent-thinking","crabgent-tool-cache","crabgent-tool-calendar","crabgent-tool-consolidation","crabgent-tool-cron","crabgent-tool-memory","crabgent-tool-models","crabgent-tool-session","crabgent-tool-task"],"surface":{"traits":["EmbeddingProvider","Hook","ImageGenerationProvider","BuilderState","ModelCapability","GlobalModelOverrideStore","GlobalReasoningEffortOverrideStore","IntoChannelFilter","PolicyHook","Provider","SttProvider","ToolOp","Tool"],"structs":["EmbeddingRequest","EmbeddingResponse","EmbeddingUsage","RunCtx","HookChain","ImageGenerationRequest","ImageGenerationResponse","GeneratedImage","ImageGenerationModelId","ImageGenerationSize","ImageGenerationAspectRatio","ImageGenerationModelInfo","ImageGenerationProviderCapabilities","ImageGenerationUsage"],"enums":["Action","EmbeddingError","KernelError","ProviderError","ToolError","Event","Decision","Outcome","CancelReason","ImageGenerationQuality","ImageGenerationFormat","ImageGenerationBackground","ImageGenerationError","PayloadError"],"tools":[],"actions":["LlmCall","tool","custom","MemorySearch","MemoryStore","MemoryGet","MemoryDelete","MemoryArchive","MemoryUnarchive","MemoryExtendExpiry","MemoryConsolidate","SessionSearch","CronCreate","CronGet","CronList","CronUpdate"]}},"crabgent-cron":{"name":"crabgent-cron","version":"0.0.1","path":"crabgent-cron","manifest":"crabgent-cron/Cargo.toml","purpose":"Claim-based cron scheduler and executor integration","group":"automation","dependencies":["crabgent-core","crabgent-log","crabgent-store"],"dependedBy":["crabgent-memory-consolidation","crabgent-tool-cron"],"surface":{"traits":["CronDelivery","CronExecutor","CronPreProcessor"],"structs":["NoopDelivery","CronExecCtx","CronExecResult","KernelCronExecutor","CronScheduler"],"enums":["CronError","CronPreProcessResult"],"tools":[],"actions":[]}},"crabgent-embedding-fastembed":{"name":"crabgent-embedding-fastembed","version":"0.0.1","path":"crabgent-embedding-fastembed","manifest":"crabgent-embedding-fastembed/Cargo.toml","purpose":"FastEmbed-backed local embedding provider over the core embedding surface","group":"providers","dependencies":["crabgent-core"],"dependedBy":["crabgent-tool-memory"],"surface":{"traits":[],"structs":["FastEmbedProvider","FastEmbedInitError"],"enums":[],"tools":[],"actions":[]}},"crabgent-examples":{"name":"crabgent-examples","version":"0.0.1","path":"crabgent-examples","manifest":"crabgent-examples/Cargo.toml","purpose":"Runnable examples","group":"support","dependencies":["crabgent-channel","crabgent-channel-slack","crabgent-core","crabgent-hook-inject"],"dependedBy":[],"surface":{"traits":[],"structs":["ScriptedProvider"],"enums":[],"tools":[],"actions":[]}},"crabgent-provider-google":{"name":"crabgent-provider-google","version":"0.0.1","path":"crabgent-provider-google","manifest":"crabgent-provider-google/Cargo.toml","purpose":"Google Gemini provider with Gemini 3.5 discovery, generateContent wire format, and Gemini image-generation support","group":"providers","dependencies":["crabgent-core","crabgent-log","crabgent-provider-transport"],"dependedBy":[],"surface":{"traits":[],"structs":["GoogleImageGenerationProvider","GoogleProvider","GoogleConfig","GeminiSseParser"],"enums":["GoogleError"],"tools":[],"actions":[]}},"crabgent-hook-compact":{"name":"crabgent-hook-compact","version":"0.0.1","path":"crabgent-hook-compact","manifest":"crabgent-hook-compact/Cargo.toml","purpose":"Semantic compaction hook with token thresholds, continuity, archive-before-compact, and per-run serialization","group":"hooks","dependencies":["crabgent-core","crabgent-log","crabgent-store"],"dependedBy":["crabgent-command-compact"],"surface":{"traits":[],"structs":["CompactionPlan","CompactConfig","CompactHook","SummaryAttempt"],"enums":["CompactFailureMode","CompactError"],"tools":[],"actions":[]}},"crabgent-hook-inject":{"name":"crabgent-hook-inject","version":"0.0.1","path":"crabgent-hook-inject","manifest":"crabgent-hook-inject/Cargo.toml","purpose":"Runtime message injection keyed by `RunId`","group":"hooks","dependencies":["crabgent-core","crabgent-log"],"dependedBy":["crabgent-channel","crabgent-examples"],"surface":{"traits":[],"structs":["InjectionRegistry","InjectHook"],"enums":[],"tools":[],"actions":[]}},"crabgent-hook-log":{"name":"crabgent-hook-log","version":"0.0.1","path":"crabgent-hook-log","manifest":"crabgent-hook-log/Cargo.toml","purpose":"Hook bridge from kernel events to `tracing` through `crabgent-log`","group":"hooks","dependencies":["crabgent-core","crabgent-log"],"dependedBy":[],"surface":{"traits":[],"structs":["LogHookConfig","LogHook"],"enums":["LogLevel"],"tools":[],"actions":[]}},"crabgent-hook-subprocess":{"name":"crabgent-hook-subprocess","version":"0.0.1","path":"crabgent-hook-subprocess","manifest":"crabgent-hook-subprocess/Cargo.toml","purpose":"JSON stdin/stdout subprocess hook adapter","group":"hooks","dependencies":["crabgent-core","crabgent-log"],"dependedBy":[],"surface":{"traits":[],"structs":["SubprocessHook","SubprocessHookBuilder","HookInput","HookCtx"],"enums":["HookOutput","FailureMode","RunnerError"],"tools":[],"actions":[]}},"crabgent-log":{"name":"crabgent-log","version":"0.0.1","path":"crabgent-log","manifest":"crabgent-log/Cargo.toml","purpose":"Foundation logging interface and PII redaction helpers","group":"support","dependencies":[],"dependedBy":["crabgent-provider-anthropic","crabgent-calendar","crabgent-channel","crabgent-channel-matrix","crabgent-channel-slack","crabgent-channel-telegram","crabgent-cron","crabgent-provider-google","crabgent-hook-compact","crabgent-hook-inject","crabgent-hook-log","crabgent-hook-subprocess","crabgent-mcp-client","crabgent-memory","crabgent-memory-consolidation","crabgent-provider-openai","crabgent-session","crabgent-store-postgres","crabgent-store-sqlite","crabgent-provider-elevenlabs","crabgent-task","crabgent-thinking","crabgent-tool-cache","crabgent-tool-consolidation","crabgent-tool-cron","crabgent-tool-memory","crabgent-tool-models","crabgent-tool-session","crabgent-tool-task"],"surface":{"traits":[],"structs":["RedactedUid","RedactedText"],"enums":["LogFormat"],"tools":[],"actions":[]}},"crabgent-mcp-client":{"name":"crabgent-mcp-client","version":"0.0.1","path":"crabgent-mcp-client","manifest":"crabgent-mcp-client/Cargo.toml","purpose":"MCP Streamable HTTP and SSE client, discovery, and proxied tools","group":"integration","dependencies":["crabgent-core","crabgent-log"],"dependedBy":[],"surface":{"traits":[],"structs":["McpClientBuilder","McpClient","McpServerConfig","McpToolFactory","McpTool","JsonRpcResponse","JsonRpcError","McpToolList","McpToolDef","McpCallResult"],"enums":["McpError"],"tools":[],"actions":[]}},"crabgent-mcp-server":{"name":"crabgent-mcp-server","version":"0.0.1","path":"crabgent-mcp-server","manifest":"crabgent-mcp-server/Cargo.toml","purpose":"MCP server with JSON-RPC 2.0, Streamable HTTP and SSE wire helpers, session lifecycle, and chat tool dispatch","group":"integration","dependencies":["crabgent-core"],"dependedBy":[],"surface":{"traits":[],"structs":["McpServerBuilder","McpServer","McpServerConfig","McpHandler","McpResponse","McpSessionId","McpSessionEntry","McpSessionRegistry","JsonRpcRequest","JsonRpcResponse","JsonRpcError"],"enums":["McpServerError"],"tools":[],"actions":["tool"]}},"crabgent-memory":{"name":"crabgent-memory","version":"0.0.1","path":"crabgent-memory","manifest":"crabgent-memory/Cargo.toml","purpose":"Memory class domain, recall scoring strategies, clock abstraction, and optional persist hook","group":"state","dependencies":["crabgent-core","crabgent-log","crabgent-store"],"dependedBy":["crabgent-memory-consolidation","crabgent-tool-memory"],"surface":{"traits":["Clock","RecallStrategy"],"structs":["SystemClock","MockClock","MemoryClassConfig","MemoryPersistHook","PersistRequest","MemoryImportance","BlendWeights","DecayPolicy","ExpiryPolicy","EpisodicBlend","RecencyOnly","SemanticBlend","MemoryRecall"],"enums":["MemoryClass","MemoryError"],"tools":[],"actions":[]}},"crabgent-memory-consolidation":{"name":"crabgent-memory-consolidation","version":"0.0.1","path":"crabgent-memory-consolidation","manifest":"crabgent-memory-consolidation/Cargo.toml","purpose":"Memory consolidation pipeline with extraction, dedup, conflict resolution, stale cleanup, audit, and checkpointing","group":"state","dependencies":["crabgent-core","crabgent-cron","crabgent-log","crabgent-memory","crabgent-store"],"dependedBy":["crabgent-tool-consolidation"],"surface":{"traits":["ConflictResolver","FactExtractor"],"structs":["ConsolidationAudit","ConsolidationCheckpoint","ConsolidationConfig","StalePolicy","ConflictResolution","LlmConflictResolver","ConsolidationCronExecutor","Deduplicator","ExtractedFact","LlmFactExtractor","ConsolidationRunner","StaleCleaner","ConsolidationResult","DedupResult"],"enums":["ConflictDecision","ConsolidationError"],"tools":[],"actions":["MemoryConsolidate"]}},"crabgent-provider-openai":{"name":"crabgent-provider-openai","version":"0.0.1","path":"crabgent-provider-openai","manifest":"crabgent-provider-openai/Cargo.toml","purpose":"OpenAI provider with `AuthStrategy`, Chat Completions and Responses wire formats, Codex OAuth support, and discovery hints","group":"providers","dependencies":["crabgent-core","crabgent-log","crabgent-provider-transport"],"dependedBy":[],"surface":{"traits":["AuthStrategy","SttWsClient","WireFormat","WireFormatDyn"],"structs":["ApiKeyAuth","CodexOAuthAuth","OpenAiEmbeddingProvider","OpenAiImageGenerationProvider","OpenAiProvider","TungsteniteWsClient","OpenAiSttProvider","OpenAiConfig","ChatCompletionsWire","ChatCompletionsStreamState","ResponsesWire","ResponsesStreamState"],"enums":["OpenAiError"],"tools":[],"actions":[]}},"crabgent-provider-transport":{"name":"crabgent-provider-transport","version":"0.0.1","path":"crabgent-provider-transport","manifest":"crabgent-provider-transport/Cargo.toml","purpose":"Provider-neutral HTTP transport helpers for retry delays, cancellation-aware sleeps, capped body reads, and auth-status classification","group":"providers","dependencies":[],"dependedBy":["crabgent-provider-anthropic","crabgent-provider-google","crabgent-provider-openai","crabgent-provider-elevenlabs"],"surface":{"traits":[],"structs":["RetryLifecycleConfig","HttpStatusError"],"enums":["TransportError","ErrorBodyMode","RetryLifecycleOutcome"],"tools":[],"actions":[]}},"crabgent-session":{"name":"crabgent-session","version":"0.0.1","path":"crabgent-session","manifest":"crabgent-session/Cargo.toml","purpose":"`SessionManager` and `SessionPersistHook`","group":"state","dependencies":["crabgent-core","crabgent-log","crabgent-store"],"dependedBy":[],"surface":{"traits":[],"structs":["SessionPersistHook","SessionManager"],"enums":[],"tools":[],"actions":[]}},"crabgent-store":{"name":"crabgent-store","version":"0.0.1","path":"crabgent-store","manifest":"crabgent-store/Cargo.toml","purpose":"Persistence traits and in-memory backend","group":"state","dependencies":["crabgent-core"],"dependedBy":["crabgent-channel-matrix","crabgent-channel-slack","crabgent-channel-telegram","crabgent-command","crabgent-command-compact","crabgent-command-model","crabgent-cron","crabgent-hook-compact","crabgent-memory","crabgent-memory-consolidation","crabgent-session","crabgent-store-postgres","crabgent-store-sqlite","crabgent-task","crabgent-tool-cache","crabgent-tool-consolidation","crabgent-tool-cron","crabgent-tool-memory","crabgent-tool-models","crabgent-tool-session","crabgent-tool-task"],"surface":{"traits":["Store","SessionStore","MemoryStore","TaskStore","CronStore","ToolCacheStore"],"structs":["ParseIdError","MemoryCronStore","MemoryGlobalOverrideStore","MemoryMemoryStore","InMemoryStore","MemorySessionStore","MemoryTaskStore","MemoryToolCacheStore","ScopeFilter","ScopePlan","MemorySearchPlan","Page","Session","SessionArchiveEntry"],"enums":["StoreError","ScopeField","RankingIntent","TaskStatus","ModelTargetDto"],"tools":[],"actions":[]}},"crabgent-store-postgres":{"name":"crabgent-store-postgres","version":"0.0.1","path":"crabgent-store-postgres","manifest":"crabgent-store-postgres/Cargo.toml","purpose":"Postgres backend with native types, migrations, and `tsvector` FTS","group":"state","dependencies":["crabgent-core","crabgent-log","crabgent-store"],"dependedBy":[],"surface":{"traits":[],"structs":["PostgresStore","PostgresStoreConfig","PostgresStoreConfigBuilder","PostgresCronStore","PostgresGlobalOverrideStore","PostgresMemoryStore","PauseAfterSelectMissGuard","PostgresSessionStore","PostgresTaskStore","PostgresTestCtx","PostgresToolCacheStore"],"enums":["PostgresStoreError"],"tools":[],"actions":[]}},"crabgent-store-sqlite":{"name":"crabgent-store-sqlite","version":"0.0.1","path":"crabgent-store-sqlite","manifest":"crabgent-store-sqlite/Cargo.toml","purpose":"SQLite backend with embedded migrations","group":"state","dependencies":["crabgent-core","crabgent-log","crabgent-store"],"dependedBy":[],"surface":{"traits":[],"structs":["SqliteStore","SqliteStoreConfig","SqliteCronStore","SqliteGlobalOverrideStore","SqliteMemoryStore","PauseAfterBeginGuard","CommitSqlGuard","PauseAfterSelectMissGuard","SqliteSessionStore","SqliteTaskStore","SqliteToolCacheStore"],"enums":["SqliteStoreError"],"tools":[],"actions":[]}},"crabgent-provider-elevenlabs":{"name":"crabgent-provider-elevenlabs","version":"0.0.1","path":"crabgent-provider-elevenlabs","manifest":"crabgent-provider-elevenlabs/Cargo.toml","purpose":"ElevenLabs STT adapter for batch and realtime transcription","group":"providers","dependencies":["crabgent-core","crabgent-log","crabgent-provider-transport"],"dependedBy":[],"surface":{"traits":["SttWsClient"],"structs":["ElevenLabsConfig","ElevenLabsModelId","ElevenLabsSttProvider","TungsteniteWsClient"],"enums":["ElevenLabsError"],"tools":[],"actions":[]}},"crabgent-task":{"name":"crabgent-task","version":"0.0.1","path":"crabgent-task","manifest":"crabgent-task/Cargo.toml","purpose":"Background task executor with cancellation, blocking waits, and depth/parallel caps","group":"automation","dependencies":["crabgent-core","crabgent-log","crabgent-store"],"dependedBy":["crabgent-tool-task"],"surface":{"traits":["TaskNotifier"],"structs":["DrainOutcome","TaskExecutor","NoopNotifier","TaskRequest"],"enums":["TaskError"],"tools":[],"actions":[]}},"crabgent-thinking":{"name":"crabgent-thinking","version":"0.0.1","path":"crabgent-thinking","manifest":"crabgent-thinking/Cargo.toml","purpose":"Channel-independent progress-step sinks and `ThinkingHook` bridge","group":"support","dependencies":["crabgent-core","crabgent-log"],"dependedBy":["crabgent-channel-matrix","crabgent-channel-slack","crabgent-channel-telegram"],"surface":{"traits":["ThinkingChannel","ProgressSink","TypingIndicator"],"structs":["ThinkingStep","NoopSink","BufferingSink","ThinkingHook","NoopTypingIndicator","TypingHook"],"enums":["ThinkingError","TypingError"],"tools":[],"actions":[]}},"crabgent-tool-cache":{"name":"crabgent-tool-cache","version":"0.0.1","path":"crabgent-tool-cache","manifest":"crabgent-tool-cache/Cargo.toml","purpose":"Tool output compaction hook and `cache_read` tool","group":"tools","dependencies":["crabgent-core","crabgent-log","crabgent-store"],"dependedBy":[],"surface":{"traits":["KernelBuilderExt"],"structs":["ToolCacheBuilder","ToolCacheConfig","ToolCacheHook","CacheReadTool","TruncatedOutput"],"enums":["ToolCacheConfigError"],"tools":["cache_read"],"actions":["tool"]}},"crabgent-tool-calendar":{"name":"crabgent-tool-calendar","version":"0.0.1","path":"crabgent-tool-calendar","manifest":"crabgent-tool-calendar/Cargo.toml","purpose":"LLM-facing calendar tool with holiday, date arithmetic, day count, and weekday ops","group":"tools","dependencies":["crabgent-calendar","crabgent-core"],"dependedBy":[],"surface":{"traits":[],"structs":["Args","CalendarTool"],"enums":["Op"],"tools":["calendar"],"actions":["CalendarHolidaysList","CalendarHolidaysNext","CalendarHolidayCheck","CalendarDaysBetween","CalendarDateArith","CalendarWeekdayInfo"]}},"crabgent-tool-consolidation":{"name":"crabgent-tool-consolidation","version":"0.0.1","path":"crabgent-tool-consolidation","manifest":"crabgent-tool-consolidation/Cargo.toml","purpose":"LLM-facing tool over `ConsolidationRunner`","group":"tools","dependencies":["crabgent-core","crabgent-log","crabgent-memory-consolidation","crabgent-store"],"dependedBy":[],"surface":{"traits":[],"structs":["Args","ConsolidationTool"],"enums":["Op"],"tools":["consolidate_memory"],"actions":[]}},"crabgent-tool-cron":{"name":"crabgent-tool-cron","version":"0.0.1","path":"crabgent-tool-cron","manifest":"crabgent-tool-cron/Cargo.toml","purpose":"LLM-facing cron CRUD tool","group":"tools","dependencies":["crabgent-core","crabgent-cron","crabgent-log","crabgent-store"],"dependedBy":[],"surface":{"traits":[],"structs":["Args","CronTool"],"enums":["Op","FieldUpdate"],"tools":["cron"],"actions":["Cron","CronCreate","CronList","CronGet","CronUpdate","CronDelete"]}},"crabgent-tool-memory":{"name":"crabgent-tool-memory","version":"0.0.1","path":"crabgent-tool-memory","manifest":"crabgent-tool-memory/Cargo.toml","purpose":"Memory search, store, get, delete, archive, unarchive, extend-expiry, and forget tool","group":"tools","dependencies":["crabgent-core","crabgent-embedding-fastembed","crabgent-log","crabgent-memory","crabgent-store"],"dependedBy":[],"surface":{"traits":[],"structs":["ArchiveTool","UnarchiveTool","ExtendExpiryTool","ForgetTool","Args","FixedEmbeddingProvider","FailingEmbeddingProvider","MemoryTool"],"enums":["Op"],"tools":["memory"],"actions":["MemorySearch","MemoryStore","MemoryGet","MemoryDelete","MemoryArchive","MemoryUnarchive","MemoryExtendExpiry"]}},"crabgent-tool-models":{"name":"crabgent-tool-models","version":"0.0.1","path":"crabgent-tool-models","manifest":"crabgent-tool-models/Cargo.toml","purpose":"Model registry and override tool","group":"tools","dependencies":["crabgent-core","crabgent-log","crabgent-store"],"dependedBy":["crabgent-command-model"],"surface":{"traits":[],"structs":["Args","ModelRegistryTool"],"enums":["Op","ModelSource"],"tools":["models"],"actions":["ModelList","ModelGet","ModelsCurrent","ReasoningEffortCurrent","ModelsSetSessionOverride","ModelsClearSessionOverride","ReasoningEffortSetSessionOverride","ReasoningEffortClearSessionOverride","ModelsSetGlobalOverride","ModelsClearGlobalOverride","ReasoningEffortSetGlobalOverride","ReasoningEffortClearGlobalOverride"]}},"crabgent-tool-session":{"name":"crabgent-tool-session","version":"0.0.1","path":"crabgent-tool-session","manifest":"crabgent-tool-session/Cargo.toml","purpose":"Session search tool","group":"tools","dependencies":["crabgent-core","crabgent-log","crabgent-store"],"dependedBy":[],"surface":{"traits":[],"structs":["SessionSearchTool"],"enums":[],"tools":["session_search"],"actions":["SessionSearch"]}},"crabgent-tool-task":{"name":"crabgent-tool-task","version":"0.0.1","path":"crabgent-tool-task","manifest":"crabgent-tool-task/Cargo.toml","purpose":"LLM-facing task create, list, get, and cancel tool","group":"tools","dependencies":["crabgent-core","crabgent-log","crabgent-store","crabgent-task"],"dependedBy":[],"surface":{"traits":[],"structs":["ContextInjection","Args","DepthLimitExceeded","TaskTool"],"enums":["Op","DepthCheckError"],"tools":["task"],"actions":["TaskCreate","TaskList","TaskGet","TaskCancel"]}}},"featureSurface":{"Providers":"Anthropic, OpenAI Chat Completions, OpenAI Responses/Codex OAuth, async model discovery, prompt caching, shared provider-neutral conversation projection, provider-specific model extensions","STT":"Core STT provider trait, OpenAI STT, ElevenLabs STT, `AudioValidator`, `SttInbox`, audio unsupported pre-flight","Vision":"Channel-side image validation/cache, neutral `ImagePayload`, provider-owned reshape, vision unsupported pre-flight","Tools":"Built-in file/bash tools plus memory, session, cache, calendar, cron, task, model, consolidation, and channel tools","MCP":"Streamable HTTP + SSE discovery, `{server}__{tool}` prefixed crabgent tools, static bearer auth, soft-fail discovery","MCP Server":"Library-only server-side MCP surface with bearer-authenticated JSON-RPC dispatch, UUIDv7 sessions, tool list/call handling, and the native `chat` tool","Memory":"Semantic, episodic, recency, notes, user_profile, skill, and tools memory classes (class is the semantic category, `kind` stays the channel-kind); `MemoryRecall` production scoring over backend search; optional tool-layer embeddings on store/search; SQLite/Postgres hybrid vector+FTS ranking; importance; explicit lifecycle tools; consolidation pipeline; body-prefix reclass migration for legacy semantic rows","Sessions":"Session persistence, history prepend, session search, channel outbound fan-out for `notify_user`","Channels":"Direct/group abstractions, send/read/react/edit/delete/upload/notify_user, inbound reactions, record-without-run `InboundRecorder` trait + `RecordingInbox` decorator, sanitize, output formatting hints, typing indicators, stop-pattern cancellation with `CancelReason` attribution (`StopPattern`, `Hook`, `External`)","Command Dispatch":"Opt-in command registry for channel adapters, per-adapter prefixes, shared `CommandWiring`, `CommandDispatchInbox`, `ToolCommand` wrapper, two-layer policy gate, session-only record-without-run persistence via `SessionStore::save_messages`, and model-set persistence through `session.model_override` + `SessionStore::save`","Calendar":"`TimeHintHook`, embedded holiday provider, six-op `calendar` tool","Compaction":"Token-aware semantic compaction, prior-summary continuity, archive-before-compact, per-run lock/cache/mute cleanup"}}</script>
+<script>
+const atlas = JSON.parse(document.getElementById("atlas-data").textContent);
+const maps = new Map(atlas.maps.map(item => [item.id, item]));
+const crates = atlas.crates;
+const state = { mapId: atlas.entryMap, selectedNodeId: null, selectedCrate: null, history: [] };
+const svgNS = "http://www.w3.org/2000/svg";
+
+function el(tag, attrs = {}, text = "") {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    if (key === "class") node.className = value;
+    else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+    else node.setAttribute(key, value);
+  }
+  if (text) node.textContent = text;
+  return node;
+}
+
+function svgel(tag, attrs = {}, text = "") {
+  const node = document.createElementNS(svgNS, tag);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+  if (text) node.textContent = text;
+  return node;
+}
+
+function currentMap() { return maps.get(state.mapId); }
+
+function setMap(id, pushHistory = true) {
+  if (!maps.has(id)) return;
+  if (pushHistory && state.mapId !== id) state.history.push(state.mapId);
+  state.mapId = id;
+  state.selectedNodeId = null;
+  state.selectedCrate = null;
+  render();
+}
+
+function selectNode(id) {
+  if (state.selectedNodeId === id) {
+    const node = currentMap().nodes.find(item => item.id === id);
+    if (node && node.targetMap && node.targetMap !== state.mapId) setMap(node.targetMap);
+    return;
+  }
+  state.selectedNodeId = id;
+  state.selectedCrate = null;
+  render();
+}
+
+function selectCrate(name) {
+  state.selectedCrate = state.selectedCrate === name ? null : name;
+  state.selectedNodeId = null;
+  render();
+}
+
+function render() {
+  document.getElementById("tagline").textContent = atlas.tagline;
+  renderStats();
+  renderMapList();
+  renderCrateGroups();
+  renderMapHead();
+  renderGraph();
+  renderInspector();
+}
+
+function renderStats() {
+  const stats = document.getElementById("stats");
+  stats.replaceChildren();
+  stats.append(
+    stat(String(atlas.generated.workspacePackageCount), "workspace crates"),
+    stat(String(atlas.maps.length), "function maps"),
+    stat(String(Object.keys(atlas.featureSurface).length), "feature rows")
+  );
+}
+
+function stat(value, label) {
+  const box = el("div", {class: "stat"});
+  box.append(el("b", {}, value), el("span", {}, label));
+  return box;
+}
+
+function renderMapList() {
+  const list = document.getElementById("mapList");
+  list.replaceChildren();
+  for (const item of atlas.maps) {
+    const button = el("button", {class: "map-button" + (item.id === state.mapId ? " active" : ""), onclick: () => setMap(item.id)});
+    button.append(document.createTextNode(item.title), el("small", {}, item.subtitle));
+    list.append(button);
+  }
+}
+
+function renderCrateGroups() {
+  const root = document.getElementById("crateGroups");
+  root.replaceChildren();
+  for (const group of atlas.capabilityGroups) {
+    const wrap = el("div", {class: "group"});
+    const known = group.crates.filter(name => crates[name]);
+    const title = el("div", {class: "group-title"});
+    title.append(el("span", {}, group.label), el("span", {}, String(known.length)));
+    wrap.append(title);
+    for (const crate of known) {
+      wrap.append(el("button", {
+        class: "crate-chip" + (crate === state.selectedCrate ? " active" : ""),
+        onclick: () => selectCrate(crate)
+      }, crate));
+    }
+    root.append(wrap);
+  }
+}
+
+function renderMapHead() {
+  const map = currentMap();
+  document.getElementById("mapTitle").textContent = map.title;
+  document.getElementById("mapSubtitle").textContent = map.subtitle;
+  document.getElementById("mapLegend").textContent = map.legend || "";
+  const crumbs = document.getElementById("crumbs");
+  crumbs.replaceChildren();
+  if (state.history.length) {
+    crumbs.append(el("button", {onclick: () => setMap(state.history.pop(), false)}, "Back"));
+  }
+  crumbs.append(el("button", {onclick: () => setMap(atlas.entryMap)}, "Runtime spine"));
+}
+
+function renderGraph() {
+  const map = currentMap();
+  const graph = document.getElementById("graph");
+  graph.replaceChildren();
+  const box = viewBoxFor(map);
+  graph.setAttribute("viewBox", `${box.x} ${box.y} ${box.w} ${box.h}`);
+  const defs = svgel("defs");
+  defs.append(marker("flow", "var(--cyan)"), marker("policy", "var(--amber)"), marker("tool", "var(--violet)"), marker("state", "var(--green)"), marker("runtime", "var(--red)"));
+  graph.append(defs);
+  graph.append(gridLayer(box));
+  const byId = new Map(map.nodes.map(node => [node.id, node]));
+  const highlightedNodeIds = new Set();
+  if (state.selectedCrate) {
+    for (const node of map.nodes) {
+      if ((node.crates || []).includes(state.selectedCrate)) highlightedNodeIds.add(node.id);
+    }
+  }
+  for (const edge of map.edges || []) {
+    const from = byId.get(edge.from);
+    const to = byId.get(edge.to);
+    if (!from || !to) continue;
+    graph.append(renderEdge(edge, from, to, highlightedNodeIds));
+  }
+  for (const node of map.nodes) {
+    graph.append(renderNode(node, highlightedNodeIds));
+  }
+}
+
+function viewBoxFor(map) {
+  const xs = map.nodes.flatMap(node => [node.x, node.x + node.w]);
+  const ys = map.nodes.flatMap(node => [node.y, node.y + node.h]);
+  const pad = 70;
+  const minX = Math.min(...xs) - pad;
+  const minY = Math.min(...ys) - pad;
+  const maxX = Math.max(...xs) + pad;
+  const maxY = Math.max(...ys) + pad;
+  return {x: minX, y: minY, w: Math.max(760, maxX - minX), h: Math.max(460, maxY - minY)};
+}
+
+function marker(kind, color) {
+  const marker = svgel("marker", {id: "arrow-" + kind, viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse"});
+  marker.append(svgel("path", {d: "M 0 0 L 10 5 L 0 10 z", fill: color}));
+  return marker;
+}
+
+function gridLayer(box) {
+  const group = svgel("g", {"aria-hidden": "true", opacity: "0.45"});
+  const startX = Math.floor(box.x / 80) * 80;
+  const startY = Math.floor(box.y / 80) * 80;
+  for (let x = startX; x < box.x + box.w; x += 80) group.append(svgel("line", {x1: x, y1: box.y, x2: x, y2: box.y + box.h, stroke: "#24221d", "stroke-width": "1"}));
+  for (let y = startY; y < box.y + box.h; y += 80) group.append(svgel("line", {x1: box.x, y1: y, x2: box.x + box.w, y2: y, stroke: "#24221d", "stroke-width": "1"}));
+  return group;
+}
+
+function renderEdge(edge, from, to, highlightedNodeIds) {
+  const group = svgel("g", {class: "edge-label"});
+  const start = pointToward(from, to);
+  const end = pointToward(to, from);
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const bend = Math.min(70, Math.max(-70, dx * 0.08));
+  const c1 = {x: start.x + dx * 0.38, y: start.y + dy * 0.22 - bend};
+  const c2 = {x: start.x + dx * 0.62, y: start.y + dy * 0.78 + bend};
+  const dim = state.selectedCrate && !(highlightedNodeIds.has(edge.from) || highlightedNodeIds.has(edge.to));
+  const kind = edge.kind || "flow";
+  const path = svgel("path", {
+    d: `M ${start.x} ${start.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${end.x} ${end.y}`,
+    class: `edge ${kind}${dim ? " dim" : ""}`,
+    "marker-end": `url(#arrow-${kind})`
+  });
+  group.append(path);
+  if (edge.label) {
+    const mid = cubic(start, c1, c2, end, 0.5);
+    const text = svgel("text", {x: mid.x, y: mid.y, "text-anchor": "middle"}, edge.label);
+    const approx = Math.max(46, edge.label.length * 6 + 14);
+    group.append(svgel("rect", {x: mid.x - approx / 2, y: mid.y - 15, width: approx, height: 20, rx: 5}));
+    group.append(text);
+  }
+  return group;
+}
+
+function pointToward(a, b) {
+  const ac = center(a);
+  const bc = center(b);
+  const dx = bc.x - ac.x;
+  const dy = bc.y - ac.y;
+  if (Math.abs(dx / Math.max(1, a.w)) > Math.abs(dy / Math.max(1, a.h))) {
+    return {x: ac.x + Math.sign(dx) * a.w / 2, y: ac.y + dy * 0.12};
+  }
+  return {x: ac.x + dx * 0.12, y: ac.y + Math.sign(dy) * a.h / 2};
+}
+
+function center(node) { return {x: node.x + node.w / 2, y: node.y + node.h / 2}; }
+
+function cubic(p0, p1, p2, p3, t) {
+  const u = 1 - t;
+  return {
+    x: u*u*u*p0.x + 3*u*u*t*p1.x + 3*u*t*t*p2.x + t*t*t*p3.x,
+    y: u*u*u*p0.y + 3*u*u*t*p1.y + 3*u*t*t*p2.y + t*t*t*p3.y
+  };
+}
+
+function renderNode(node, highlightedNodeIds) {
+  const selected = state.selectedNodeId === node.id;
+  const highlighted = highlightedNodeIds.has(node.id);
+  const dim = state.selectedCrate && !highlighted;
+  const group = svgel("g", {
+    class: `node ${node.kind || "runtime"}${selected ? " selected" : ""}${highlighted ? " highlight" : ""}${dim ? " dim" : ""}`,
+    transform: `translate(${node.x} ${node.y})`,
+    role: "button",
+    tabindex: "0",
+    "aria-label": node.label
+  });
+  group.addEventListener("click", () => selectNode(node.id));
+  group.addEventListener("dblclick", () => node.targetMap && setMap(node.targetMap));
+  group.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") selectNode(node.id);
+  });
+  group.append(svgel("rect", {width: node.w, height: node.h}));
+  const title = svgel("text", {class: "node-title", x: 13, y: 24});
+  wrapSvgText(title, node.label, Math.max(12, Math.floor(node.w / 9)), 16);
+  group.append(title);
+  group.append(svgel("text", {class: "node-kind", x: 13, y: node.h - 13}, node.kind || "runtime"));
+  if (node.targetMap && node.targetMap !== state.mapId) {
+    group.append(svgel("circle", {cx: node.w - 16, cy: 16, r: 5, fill: "var(--amber)"}));
+  }
+  return group;
+}
+
+function wrapSvgText(textNode, value, maxChars, lineHeight) {
+  const words = String(value).split(/\s+/);
+  let line = "";
+  let dy = 0;
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word;
+    if (next.length > maxChars && line) {
+      textNode.append(svgel("tspan", {x: textNode.getAttribute("x"), dy: dy ? lineHeight : 0}, line));
+      line = word;
+      dy += lineHeight;
+    } else {
+      line = next;
+    }
+  }
+  if (line) textNode.append(svgel("tspan", {x: textNode.getAttribute("x"), dy: dy ? lineHeight : 0}, line));
+}
+
+function renderInspector() {
+  const root = document.getElementById("inspector");
+  root.replaceChildren();
+  if (state.selectedCrate) return renderCrateInspector(root, state.selectedCrate);
+  if (state.selectedNodeId) {
+    const node = currentMap().nodes.find(item => item.id === state.selectedNodeId);
+    if (node) return renderNodeInspector(root, node);
+  }
+  renderMapInspector(root);
+}
+
+function renderMapInspector(root) {
+  const map = currentMap();
+  root.append(el("h2", {}, "Current Map"));
+  root.append(el("h1", {class: "panel-title"}, map.title));
+  root.append(el("p", {class: "summary"}, map.legend || map.subtitle));
+  const section = sectionBlock("Signal Lines");
+  const list = el("div", {class: "edge-list"});
+  for (const edge of map.edges || []) {
+    const from = map.nodes.find(node => node.id === edge.from)?.label || edge.from;
+    const to = map.nodes.find(node => node.id === edge.to)?.label || edge.to;
+    const card = el("div", {class: "edge-card"});
+    card.innerHTML = `<b>${escapeHtml(from)}</b> -> <b>${escapeHtml(to)}</b><br>${escapeHtml(edge.label || edge.kind || "")}`;
+    list.append(card);
+  }
+  section.append(list);
+  root.append(section);
+  const principles = sectionBlock("Spirit Pressure");
+  const pills = el("div", {class: "pill-list"});
+  for (const principle of atlas.principles) pills.append(el("span", {class: "pill"}, principle));
+  principles.append(pills);
+  root.append(principles);
+}
+
+function renderNodeInspector(root, node) {
+  root.append(el("h2", {}, "Function Node"));
+  root.append(el("h1", {class: "panel-title"}, node.label));
+  root.append(el("p", {class: "summary"}, node.summary || ""));
+  if (node.targetMap && node.targetMap !== state.mapId) {
+    root.append(el("button", {class: "action-button", onclick: () => setMap(node.targetMap)}, "Open detail map"));
+  }
+  root.append(facts({kind: node.kind || "runtime", map: currentMap().title}));
+  root.append(listSection("Surface Signals", node.surface || []));
+  root.append(crateSection(node.crates || []));
+}
+
+function renderCrateInspector(root, name) {
+  const crate = crates[name];
+  if (!crate) return;
+  root.append(el("h2", {}, "Crate Underside"));
+  root.append(el("h1", {class: "panel-title"}, name));
+  root.append(el("p", {class: "summary"}, crate.purpose || "No PROJECT.md purpose text found."));
+  root.append(facts({group: crate.group, manifest: crate.manifest, version: crate.version}));
+  const used = atlas.maps.flatMap(map => map.nodes.filter(node => (node.crates || []).includes(name)).map(node => `${map.title} / ${node.label}`));
+  root.append(listSection("Used By Function Nodes", used));
+  root.append(listSection("Depends On", crate.dependencies));
+  root.append(listSection("Depended On By", crate.dependedBy));
+  const surface = [];
+  for (const [label, items] of Object.entries(crate.surface || {})) {
+    if (items.length) surface.push(`${label}: ${items.join(", ")}`);
+  }
+  root.append(listSection("Rust Surface Signals", surface));
+}
+
+function facts(obj) {
+  const section = sectionBlock("Facts");
+  const wrap = el("div", {class: "facts"});
+  for (const [key, value] of Object.entries(obj)) {
+    const row = el("div", {class: "fact"});
+    row.append(el("span", {}, key), el("span", {}, String(value || "")));
+    wrap.append(row);
+  }
+  section.append(wrap);
+  return section;
+}
+
+function sectionBlock(title) {
+  const section = el("section", {class: "section"});
+  section.append(el("h3", {}, title));
+  return section;
+}
+
+function listSection(title, items) {
+  const section = sectionBlock(title);
+  if (!items || !items.length) {
+    section.append(el("div", {class: "empty"}, "None detected."));
+    return section;
+  }
+  const list = el("div", {class: "pill-list"});
+  for (const item of items) list.append(el("span", {class: "pill"}, item));
+  section.append(list);
+  return section;
+}
+
+function crateSection(names) {
+  const section = sectionBlock("Implementing Crates");
+  if (!names.length) {
+    section.append(el("div", {class: "empty"}, "No crate mapping."));
+    return section;
+  }
+  const list = el("div", {class: "pill-list"});
+  for (const name of names) {
+    list.append(el("button", {class: "pill clickable", onclick: () => selectCrate(name)}, name));
+  }
+  section.append(list);
+  return section;
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, char => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"}[char]));
+}
+
+render();
+</script>
+</body>
+</html>

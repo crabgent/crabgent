@@ -1,0 +1,20 @@
+[package]
+name = "crabgent-thinking"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Generic progress-step sinks and hook bridge for crabgent adapters."
+
+[dependencies]
+crabgent-core.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+crabgent-log.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,23 @@
+[package]
+name = "crabgent-calendar"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Calendar/holiday domain: TimeHintHook, embedded multi-country holiday JSON, chrono-tz timezone awareness."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+chrono-tz.workspace = true
+serde_json.workspace = true
+crabgent-log.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }

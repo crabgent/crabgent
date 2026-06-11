@@ -1,0 +1,29 @@
+[package]
+name = "crabgent-tool-memory"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Memory tool: a Tool exposing search/store/get/delete operations over a MemoryStore, gated by a PolicyHook on typed Action::Memory* variants."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-log.workspace = true
+crabgent-memory.workspace = true
+crabgent-store.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true
+
+[dev-dependencies]
+crabgent-embedding-fastembed = { path = "../crabgent-embedding-fastembed" }
+crabgent-store = { workspace = true, features = ["memory"] }
+crabgent-test-support = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
+tokio-util.workspace = true

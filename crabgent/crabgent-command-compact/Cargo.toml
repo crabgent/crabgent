@@ -1,0 +1,25 @@
+[package]
+name = "crabgent-command-compact"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Compact command adapter for crabgent command dispatch."
+
+[dependencies]
+async-trait.workspace = true
+crabgent-command.workspace = true
+crabgent-core.workspace = true
+crabgent-hook-compact.workspace = true
+crabgent-store.workspace = true
+
+[dev-dependencies]
+crabgent-channel.workspace = true
+crabgent-test-support = { workspace = true }
+tokio.workspace = true
+tokio-util.workspace = true
+
+[lints]
+workspace = true

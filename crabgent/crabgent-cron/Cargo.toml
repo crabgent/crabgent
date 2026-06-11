@@ -1,0 +1,32 @@
+[package]
+name = "crabgent-cron"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Cron-style scheduler for crabgent kernel runs (claim-based, multi-worker safe)"
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-store.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+chrono-tz.workspace = true
+cron.workspace = true
+futures.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+crabgent-log.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+crabgent-store = { workspace = true, features = ["memory"] }
+crabgent-test-support = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "time"] }
+tracing-test.workspace = true

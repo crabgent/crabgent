@@ -1,0 +1,1132 @@
+<!doctype html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>crabgent :: cron</title>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=ibm-plex-mono:400,500,600,700|martian-mono:700,800&display=swap" rel="stylesheet">
+<script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js" integrity="sha384-l8f0VcPi/M1iHPv8egOnY/15TDwqgbOR1anMIJWvU6nLRgZVLTLSaNqi/TOoT5Fh" crossorigin="anonymous"></script>
+<style>
+:root {
+  --bg: #0a0b0e;
+  --bg-deep: #060708;
+  --panel: #111319;
+  --panel-2: #161922;
+  --panel-3: #1b1f2a;
+  --border: #242a35;
+  --border-hot: #364050;
+  --text: #d8d4c6;
+  --bright: #f4f1e7;
+  --muted: #7b8292;
+  --dim: #4b5263;
+  --claw: #ff5b2c;
+  --claw-soft: #ff7b50;
+  --danger: #ff4545;
+  --success: #7fd17a;
+  --listen: #4fc4d7;
+  --mono: 'IBM Plex Mono', 'JetBrains Mono', 'SF Mono', 'Menlo', monospace;
+  --display: 'Martian Mono', 'IBM Plex Mono', monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(1100px 540px at 14% -10%, rgba(255, 91, 44, 0.07), transparent 60%),
+    radial-gradient(900px 480px at 90% 112%, rgba(79, 196, 215, 0.045), transparent 55%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(216, 212, 198, 0.030) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(216, 212, 198, 0.022) 1px, transparent 1px);
+  background-size: 34px 34px;
+  -webkit-mask-image: radial-gradient(ellipse 130% 100% at 50% 0%, black 25%, transparent 80%);
+  mask-image: radial-gradient(ellipse 130% 100% at 50% 0%, black 25%, transparent 80%);
+  z-index: 0;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.14;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.55  0 0 0 0 0.55  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  z-index: 1000;
+  mix-blend-mode: overlay;
+}
+::selection { background: var(--claw); color: var(--bg); }
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border: 2px solid var(--bg); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--claw); }
+[x-cloak] { display: none !important; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { from { opacity: 0.7; } to { opacity: 1; } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+.app { position: relative; z-index: 1; min-height: 100vh; padding-bottom: 56px; }
+
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  animation: rise 0.3s ease-out both;
+}
+.mark {
+  font-family: var(--display);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  font-size: 14px;
+  color: var(--bright);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 0;
+}
+.mark::before {
+  content: "\27a4\27a4";
+  color: var(--claw);
+  letter-spacing: -0.12em;
+  text-shadow: 0 0 14px rgba(255, 91, 44, 0.6);
+}
+.right { display: flex; gap: 2px; align-items: stretch; flex-wrap: wrap; }
+.right .spinner { align-self: center; margin-right: 10px; }
+.nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0 13px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 0;
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.nav:hover { color: var(--bright); background: rgba(216, 212, 198, 0.04); }
+.nav.active { color: var(--claw); }
+.nav.active::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -1px;
+  height: 2px;
+  background: var(--claw);
+  box-shadow: 0 0 10px rgba(255, 91, 44, 0.7);
+}
+.nav.logout { color: var(--dim); }
+.nav.logout:hover { color: var(--danger); background: rgba(255, 69, 69, 0.06); }
+.nav.create {
+  align-self: center;
+  margin: 0 10px;
+  border: 1px solid var(--claw);
+  color: var(--claw);
+  padding: 6px 14px;
+  transition: color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.nav.create:hover {
+  background: var(--claw);
+  color: var(--bg-deep);
+  box-shadow: 0 4px 20px -6px rgba(255, 91, 44, 0.7);
+}
+
+.filterbar {
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+  padding: 14px 24px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(120px, 1fr));
+  gap: 12px;
+  animation: rise 0.35s 0.05s ease-out both;
+}
+.field label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  background: var(--bg-deep);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 7px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field input::placeholder, .field textarea::placeholder { color: var(--dim); }
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--claw);
+  box-shadow: 0 0 0 1px rgba(255, 91, 44, 0.25);
+}
+.field select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 24px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 12px) 50%, calc(100% - 8px) 50%;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+}
+.field-submit { align-self: end; }
+
+.btn {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 11px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.btn:hover {
+  border-color: var(--claw);
+  color: var(--claw);
+  box-shadow: 0 0 0 1px rgba(255, 91, 44, 0.2), 0 4px 18px -8px rgba(255, 91, 44, 0.5);
+}
+.btn-primary { border-color: var(--claw); color: var(--claw); }
+.btn-primary:hover { background: var(--claw); color: var(--bg-deep); }
+.btn-danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 55%, transparent); }
+.btn-danger:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--bg-deep);
+  box-shadow: 0 0 0 1px rgba(255, 69, 69, 0.25), 0 4px 18px -8px rgba(255, 69, 69, 0.5);
+}
+.btn-confirm {
+  color: var(--bg-deep);
+  background: var(--danger);
+  border-color: var(--danger);
+  animation: pulse 0.9s ease-in-out infinite alternate;
+}
+
+.list { padding: 14px 24px; max-width: 1400px; margin: 0 auto; animation: rise 0.4s 0.1s ease-out both; }
+.listmeta { padding: 2px 2px 12px; font-size: 11px; color: var(--muted); }
+.listmeta b { color: var(--bright); font-weight: 600; }
+.skel {
+  height: 88px;
+  border: 1px solid var(--border);
+  background: linear-gradient(100deg, var(--panel) 40%, var(--panel-3) 50%, var(--panel) 60%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+  margin-bottom: 10px;
+}
+.job {
+  position: relative;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.job::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  bottom: -1px;
+  width: 3px;
+  background: var(--success);
+  opacity: 0.65;
+  transition: background 0.15s, opacity 0.15s;
+}
+.job.off::before { background: var(--dim); opacity: 0.5; }
+.job.off .job-name { color: var(--muted); }
+.job:hover { border-color: var(--border-hot); box-shadow: 0 10px 28px -16px rgba(0, 0, 0, 0.9); }
+.job-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.job-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.job-name { font-weight: 600; color: var(--bright); }
+.job-id { color: var(--dim); font-size: 10px; margin-top: 2px; }
+.job-meta { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 11px; color: var(--muted); align-items: baseline; }
+.job-meta b { color: var(--dim); font-weight: normal; }
+.job-meta b + span, .job-meta b + code { color: var(--text); }
+.sched {
+  font-family: var(--mono);
+  color: var(--claw-soft);
+  font-weight: 600;
+}
+.sched-raw { color: var(--dim); font-size: 10px; margin-left: 6px; }
+.job-meta code { font-family: var(--mono); color: var(--claw-soft); }
+.job-body {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-top: 1px dashed var(--border);
+  padding-top: 10px;
+}
+.job-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, currentColor 50%, transparent);
+  background: color-mix(in srgb, currentColor 9%, transparent);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.tag.run_once { color: var(--claw); }
+
+.switch {
+  position: relative;
+  width: 36px;
+  height: 19px;
+  flex: none;
+  cursor: pointer;
+}
+.switch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.switch .track {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-hot);
+  transition: border-color 0.15s, background 0.15s;
+  pointer-events: none;
+}
+.switch .track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 11px;
+  height: 11px;
+  background: var(--dim);
+  transition: left 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.switch input:checked + .track { border-color: var(--success); background: color-mix(in srgb, var(--success) 10%, var(--bg-deep)); }
+.switch input:checked + .track::after {
+  left: 20px;
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(127, 209, 122, 0.7);
+}
+.switch input:focus-visible + .track { box-shadow: 0 0 0 2px rgba(255, 91, 44, 0.4); }
+
+.empty { padding: 56px 24px; color: var(--muted); text-align: center; }
+.empty .crab {
+  margin: 0 0 16px;
+  color: var(--dim);
+  font-size: 12px;
+  line-height: 1.25;
+  white-space: pre;
+  user-select: none;
+}
+.empty .crab b { color: var(--claw); font-weight: 400; }
+.err {
+  color: var(--danger);
+  border-left: 2px solid var(--danger);
+  background: rgba(255, 69, 69, 0.07);
+  padding: 8px 12px;
+  margin: 12px 24px 0;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 7, 8, 0.72);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fade 0.15s ease-out both;
+}
+.modal {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-3), var(--panel-2));
+  border: 1px solid var(--border-hot);
+  box-shadow: 0 40px 120px -30px rgba(0, 0, 0, 0.95);
+  padding: 22px 24px;
+  width: 90%;
+  max-width: 720px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: pop 0.2s ease-out both;
+}
+.modal::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 18px;
+  height: 18px;
+  border-top: 2px solid var(--claw);
+  border-left: 2px solid var(--claw);
+  pointer-events: none;
+}
+.modal h2 {
+  margin: 0 0 18px 0;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--claw);
+}
+.modal .field { margin-bottom: 12px; }
+.modal .err { margin: 12px 0 0; }
+.modal-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+.modal-checks { display: flex; gap: 18px; margin-top: 8px; }
+.modal-checks label {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  color: var(--text);
+}
+.modal-checks input { accent-color: var(--claw); width: 14px; height: 14px; }
+.modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 18px; }
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border);
+  border-top-color: var(--claw);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+.help { font-size: 10px; color: var(--dim); margin-top: 5px; }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(6, 7, 8, 0.6);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14vh;
+}
+.overlay[hidden] { display: none; }
+.overlay-box {
+  background: linear-gradient(180deg, var(--panel-3), var(--panel-2));
+  border: 1px solid var(--border-hot);
+  box-shadow: 0 40px 120px -30px rgba(0, 0, 0, 0.95);
+  width: min(520px, 92vw);
+  position: relative;
+  animation: pop 0.16s ease-out both;
+}
+.overlay-box::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 18px;
+  height: 18px;
+  border-top: 2px solid var(--claw);
+  border-left: 2px solid var(--claw);
+  pointer-events: none;
+}
+.palette input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  color: var(--bright);
+  font-family: var(--mono);
+  font-size: 14px;
+  outline: none;
+}
+.palette input::placeholder { color: var(--dim); }
+.palette-list { max-height: 320px; overflow-y: auto; padding: 6px; }
+.palette-item {
+  padding: 9px 12px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.palette-item.sel, .palette-item:hover {
+  background: var(--panel);
+  color: var(--claw);
+  box-shadow: inset 2px 0 0 var(--claw);
+}
+.palette-empty { padding: 14px; color: var(--dim); font-size: 12px; }
+.cheat { padding: 18px 20px; }
+.cheat h3 {
+  margin: 0 0 14px;
+  font-family: var(--display);
+  font-size: 12px;
+  color: var(--claw);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.cheat-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 18px;
+  font-size: 12px;
+  color: var(--muted);
+  align-items: center;
+}
+kbd {
+  display: inline-block;
+  border: 1px solid var(--border-hot);
+  background: var(--bg-deep);
+  padding: 1px 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text);
+  border-radius: 3px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 900px) {
+  .filterbar { grid-template-columns: 1fr 1fr; }
+  .masthead { padding: 0 14px; }
+  .list { padding: 14px; }
+  .modal-grid-4 { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app" x-data="cronApp()" x-init="init()" @keydown.escape.window="closeEdit()">
+
+<div class="masthead">
+  <span class="mark">crabgent</span>
+  <div class="right">
+    <span x-show="loading" class="spinner"></span>
+    <a class="nav" href="/admin">memory</a>
+    <a class="nav" href="/admin/relations">relations</a>
+    <a class="nav active" href="/admin/cron" aria-current="page">cron</a>
+    <a class="nav" href="/admin/sessions">sessions</a>
+    <a class="nav" href="/admin/voice">voice</a>
+    <button class="nav create" @click="openCreate()" type="button">+ neuer job</button>
+    <a class="nav logout" href="/admin/logout">logout</a>
+  </div>
+</div>
+
+<form class="filterbar" @submit.prevent>
+  <div class="field">
+    <label>owner</label>
+    <select x-model="filter.owner">
+      <option value="">(alle)</option>
+      <template x-for="v in distinct('owner')" :key="v"><option :value="v" x-text="v"></option></template>
+    </select>
+  </div>
+  <div class="field">
+    <label>channel</label>
+    <select x-model="filter.channel">
+      <option value="">(alle)</option>
+      <template x-for="v in distinct('channel')" :key="v"><option :value="v" x-text="v"></option></template>
+    </select>
+  </div>
+  <div class="field"><label>conv</label><input type="text" x-model="filter.conv"></div>
+  <div class="field">
+    <label>agent</label>
+    <select x-model="filter.agent">
+      <option value="">(alle)</option>
+      <template x-for="v in distinct('agent')" :key="v"><option :value="v" x-text="v"></option></template>
+    </select>
+  </div>
+  <div class="field">
+    <label>kind</label>
+    <select x-model="filter.kind">
+      <option value="">(alle)</option>
+      <template x-for="v in distinct('kind')" :key="v"><option :value="v" x-text="v"></option></template>
+    </select>
+  </div>
+  <div class="field field-submit"><button class="btn" @click="resetFilter()" type="button">reset</button></div>
+</form>
+
+<div class="err" x-show="error" x-text="error"></div>
+
+<div class="list">
+  <div class="listmeta" x-show="jobs.length > 0"><b x-text="jobs.length"></b>&nbsp;jobs</div>
+  <template x-if="loading && allJobs.length === 0">
+    <div>
+      <div class="skel"></div>
+      <div class="skel"></div>
+    </div>
+  </template>
+  <div class="empty" x-show="!loading && jobs.length === 0">
+    <pre class="crab" aria-hidden="true">   _~^~^~_
+<b>\) /</b>  o o  <b>\ (/</b>
+  '_   -   _'
+  / '-----' \</pre>
+    keine cron jobs gefunden.
+  </div>
+  <template x-for="job in jobs" :key="job.id">
+    <div class="job" :class="job.enabled ? '' : 'off'">
+      <div class="job-head">
+        <div class="job-title">
+          <label class="switch" :title="job.enabled ? 'disable' : 'enable'">
+            <input type="checkbox" :checked="job.enabled" @change="toggleEnabled(job)">
+            <span class="track"></span>
+          </label>
+          <div>
+            <span class="job-name" x-text="job.name"></span>
+            <span class="tag run_once" x-show="job.run_once" style="margin-left: 8px;">run-once</span>
+            <div class="job-id" x-text="job.id"></div>
+          </div>
+        </div>
+        <div class="job-actions">
+          <button class="btn" @click="openEdit(job)" type="button">edit</button>
+          <button class="btn" @click="duplicate(job)" type="button">duplicate</button>
+          <template x-if="job.confirmDelete">
+            <button class="btn btn-confirm" @click="remove(job)" type="button">confirm delete</button>
+          </template>
+          <template x-if="!job.confirmDelete">
+            <button class="btn btn-danger" @click="askRemove(job)" type="button">delete</button>
+          </template>
+        </div>
+      </div>
+      <div class="job-meta">
+        <span><b>schedule:</b> <code class="sched" x-text="humanSchedule(job.schedule)"></code><span class="sched-raw" x-show="schedRaw(job.schedule)" x-text="schedRaw(job.schedule)"></span></span>
+        <span><b>next:</b> <span :title="fmtTs(job.next_run)" x-text="fmtRel(job.next_run)"></span></span>
+        <span><b>last:</b> <span :title="fmtTs(job.last_run)" x-text="fmtRel(job.last_run)"></span></span>
+        <span x-show="job.scope.owner"><b>owner:</b> <span x-text="job.scope.owner?.value || job.scope.owner"></span></span>
+        <span x-show="job.scope.channel"><b>channel:</b> <span x-text="job.scope.channel"></span></span>
+        <span x-show="job.scope.conv"><b>conv:</b> <span x-text="job.scope.conv"></span></span>
+        <span x-show="job.scope.agent"><b>agent:</b> <span x-text="job.scope.agent"></span></span>
+        <span x-show="job.pre_command"><b>pre:</b> <code x-text="job.pre_command"></code></span>
+        <span x-show="job.model_override"><b>model:</b> <span x-text="formatModel(job.model_override)"></span></span>
+      </div>
+      <div class="job-body" x-text="job.prompt"></div>
+    </div>
+  </template>
+</div>
+
+<div class="modal-backdrop" x-show="editing" x-cloak @click.self="closeEdit()">
+  <div class="modal">
+    <h2 x-text="form.id ? 'cron job bearbeiten' : 'neuer cron job'"></h2>
+    <div class="field">
+      <label>name *</label>
+      <input type="text" x-model="form.name" required>
+    </div>
+    <div class="field">
+      <label>prompt *</label>
+      <textarea x-model="form.prompt" rows="4" required></textarea>
+    </div>
+    <div class="modal-grid-2">
+      <div class="field">
+        <label>interval_secs</label>
+        <input type="number" min="0" x-model.number="form.interval_secs" placeholder="z.B. 300">
+      </div>
+      <div class="field">
+        <label>cron_expr</label>
+        <input type="text" x-model="form.cron_expr" placeholder="z.B. 0 9 * * *">
+        <div class="help" x-show="form.cron_expr" x-text="cronHuman(form.cron_expr)"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>cron_tz (nur bei cron_expr)</label>
+      <input type="text" x-model="form.cron_tz" placeholder="Europe/Berlin">
+      <div class="help">interval_secs ODER cron_expr setzen, nicht beides.</div>
+    </div>
+    <div class="modal-grid-4">
+      <div class="field"><label>scope.owner</label><input type="text" x-model="form.scope_owner"></div>
+      <div class="field"><label>scope.channel</label><input type="text" x-model="form.scope_channel"></div>
+      <div class="field"><label>scope.conv</label><input type="text" x-model="form.scope_conv"></div>
+      <div class="field"><label>scope.agent</label><input type="text" x-model="form.scope_agent"></div>
+    </div>
+    <div class="modal-grid-2">
+      <div class="field">
+        <label>model_override (id, optional)</label>
+        <input type="text" x-model="form.model_id" placeholder="z.B. claude-sonnet-4-6">
+      </div>
+      <div class="field">
+        <label>model_override provider (optional)</label>
+        <input type="text" x-model="form.model_provider" placeholder="anthropic">
+      </div>
+    </div>
+    <div class="field">
+      <label>pre_command (optional)</label>
+      <input type="text" x-model="form.pre_command">
+    </div>
+    <div class="field">
+      <label>delivery_ctx (JSON, optional)</label>
+      <textarea x-model="form.delivery_ctx" rows="2" placeholder='{"channel":"@user:matrix.example"}'></textarea>
+    </div>
+    <div class="modal-checks">
+      <label>
+        <input type="checkbox" x-model="form.enabled"> enabled
+      </label>
+      <label>
+        <input type="checkbox" x-model="form.run_once"> run_once
+      </label>
+    </div>
+    <div class="err" x-show="formError" x-text="formError"></div>
+    <div class="modal-actions">
+      <button class="btn" @click="closeEdit()" type="button">cancel</button>
+      <button class="btn btn-primary" @click="save()" type="button">save</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div id="cgPalette" class="overlay" hidden>
+  <div class="overlay-box palette">
+    <input id="cgPaletteInput" type="text" placeholder="command or page..." autocomplete="off" spellcheck="false">
+    <div id="cgPaletteList" class="palette-list"></div>
+  </div>
+</div>
+<div id="cgCheat" class="overlay" hidden>
+  <div class="overlay-box cheat">
+    <h3>keyboard</h3>
+    <div class="cheat-grid">
+      <span><kbd>cmd</kbd>+<kbd>k</kbd></span><span>command palette</span>
+      <span><kbd>/</kbd></span><span>focus search</span>
+      <span><kbd>g</kbd> <kbd>m</kbd>/<kbd>r</kbd>/<kbd>c</kbd>/<kbd>s</kbd>/<kbd>v</kbd></span><span>go to memory / relations / cron / sessions / voice</span>
+      <span><kbd>?</kbd></span><span>this help</span>
+      <span><kbd>esc</kbd></span><span>close overlays</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function fmtRel(ts) {
+  if (!ts) return '-';
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return ts;
+  const diff = d.getTime() - Date.now();
+  const abs = Math.abs(diff);
+  const units = [
+    [31536000000, 'y'], [2592000000, 'mo'], [604800000, 'w'],
+    [86400000, 'd'], [3600000, 'h'], [60000, 'm'],
+  ];
+  for (const [ms, label] of units) {
+    if (abs >= ms) {
+      const v = Math.round(abs / ms);
+      return diff < 0 ? v + label + ' ago' : 'in ' + v + label;
+    }
+  }
+  return 'now';
+}
+
+const CRON_DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function cronHuman(expr) {
+  const parts = String(expr || '').trim().split(/\s+/);
+  if (parts.length !== 5) return expr || '';
+  const [min, hour, dom, mon, dow] = parts;
+  const hhmm = (h, m) => String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  const dowName = (t) => t.split(',').map(part => {
+    const range = part.split('-').map(x => /^\d+$/.test(x) ? CRON_DOW[Number(x) % 7] : x);
+    return range.join('-');
+  }).join(',');
+  if (/^\d+$/.test(min) && /^\d+$/.test(hour) && dom === '*' && mon === '*') {
+    if (dow === '*') return 'daily ' + hhmm(hour, min);
+    if (/^[\d,\-]+$/.test(dow)) return dowName(dow) + ' ' + hhmm(hour, min);
+  }
+  const stepMin = min.match(/^\*\/(\d+)$/);
+  if (stepMin && hour === '*' && dom === '*' && mon === '*' && dow === '*') {
+    return 'every ' + stepMin[1] + 'min';
+  }
+  const stepHour = hour.match(/^\*\/(\d+)$/);
+  if (stepHour && /^\d+$/.test(min) && dom === '*' && mon === '*' && dow === '*') {
+    return 'every ' + stepHour[1] + 'h at :' + String(min).padStart(2, '0');
+  }
+  return expr;
+}
+
+function humanDur(s) {
+  if (s % 86400 === 0) return (s / 86400) + 'd';
+  if (s % 3600 === 0) return (s / 3600) + 'h';
+  if (s % 60 === 0) return (s / 60) + 'min';
+  return s + 's';
+}
+
+function emptyCronForm() {
+  return {
+    id: null,
+    name: '',
+    prompt: '',
+    interval_secs: null,
+    cron_expr: '',
+    cron_tz: '',
+    scope_owner: '',
+    scope_channel: '',
+    scope_conv: '',
+    scope_agent: '',
+    model_id: '',
+    model_provider: '',
+    pre_command: '',
+    delivery_ctx: '',
+    enabled: true,
+    run_once: false,
+  };
+}
+
+function cronApp() {
+  return {
+    allJobs: [],
+    loading: false,
+    error: '',
+    filter: { owner: '', channel: '', conv: '', agent: '', kind: '' },
+    editing: false,
+    form: emptyCronForm(),
+    formError: '',
+
+    _emptyForm() { return emptyCronForm(); },
+
+    async init() { await this.load(); },
+
+    fmtRel,
+    cronHuman,
+
+    get jobs() {
+      const f = this.filter;
+      return this.allJobs.filter(j => {
+        const s = j.scope || {};
+        if (f.owner && this._ownerStr(s.owner) !== f.owner) return false;
+        if (f.channel && (s.channel || '') !== f.channel) return false;
+        if (f.conv && !(s.conv || '').toLowerCase().includes(f.conv.toLowerCase())) return false;
+        if (f.agent && (s.agent || '') !== f.agent) return false;
+        if (f.kind && (s.kind || '') !== f.kind) return false;
+        return true;
+      });
+    },
+
+    distinct(field) {
+      const seen = new Set();
+      for (const j of this.allJobs) {
+        const s = j.scope || {};
+        const v = field === 'owner' ? this._ownerStr(s.owner) : (s[field] || '');
+        if (v) seen.add(v);
+      }
+      return Array.from(seen).sort();
+    },
+
+    resetFilter() { this.filter = { owner: '', channel: '', conv: '', agent: '', kind: '' }; },
+
+    async load() {
+      this.loading = true;
+      this.error = '';
+      try {
+        const r = await fetch('/admin/api/cron?limit=500', { credentials: 'same-origin' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        this.allJobs = (data.jobs || []).map(j => ({ ...j, confirmDelete: false }));
+      } catch (e) {
+        this.error = String(e);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    openCreate() {
+      this.form = this._emptyForm();
+      this.formError = '';
+      this.editing = true;
+    },
+
+    openEdit(job) {
+      this.form = {
+        id: job.id,
+        name: job.name,
+        prompt: job.prompt,
+        interval_secs: job.schedule?.interval_secs ?? null,
+        cron_expr: job.schedule?.cron_expr || '',
+        cron_tz: job.schedule?.cron_tz || '',
+        scope_owner: this._ownerStr(job.scope?.owner) || '',
+        scope_channel: job.scope?.channel || '',
+        scope_conv: job.scope?.conv || '',
+        scope_agent: job.scope?.agent || '',
+        model_id: this._modelId(job.model_override),
+        model_provider: this._modelProvider(job.model_override),
+        pre_command: job.pre_command || '',
+        delivery_ctx: job.delivery_ctx ? JSON.stringify(job.delivery_ctx) : '',
+        enabled: !!job.enabled,
+        run_once: !!job.run_once,
+      };
+      this.formError = '';
+      this.editing = true;
+    },
+
+    duplicate(job) {
+      this.openEdit(job);
+      this.form.id = null;
+      this.form.name = job.name + ' (copy)';
+    },
+
+    closeEdit() { this.editing = false; },
+
+    _ownerStr(o) {
+      if (!o) return '';
+      if (typeof o === 'string') return o;
+      return o.value || '';
+    },
+    _modelId(m) {
+      if (!m) return '';
+      if (typeof m === 'string') return m;
+      return m.id || '';
+    },
+    _modelProvider(m) {
+      if (!m) return '';
+      if (typeof m === 'string') return '';
+      return m.provider || '';
+    },
+
+    _buildPayload(forUpdate) {
+      const f = this.form;
+      const schedule = {
+        interval_secs: f.interval_secs && f.interval_secs > 0 ? Number(f.interval_secs) : null,
+        cron_expr: f.cron_expr || null,
+        cron_tz: f.cron_tz || null,
+      };
+      const scope = {
+        owner: f.scope_owner ? { value: f.scope_owner } : null,
+        channel: f.scope_channel || null,
+        conv: f.scope_conv || null,
+        agent: f.scope_agent || null,
+        kind: null,
+      };
+      let model_override = null;
+      if (f.model_id) {
+        if (f.model_provider) {
+          model_override = { provider: f.model_provider, id: f.model_id };
+        } else {
+          model_override = f.model_id;
+        }
+      }
+      let delivery_ctx = {};
+      if (f.delivery_ctx && f.delivery_ctx.trim()) {
+        try { delivery_ctx = JSON.parse(f.delivery_ctx); }
+        catch (e) { throw new Error('delivery_ctx ist kein valides JSON: ' + e.message); }
+      }
+      if (forUpdate) {
+        const payload = {
+          name: f.name || null,
+          prompt: f.prompt || null,
+          schedule: schedule,
+          enabled: f.enabled,
+          run_once: f.run_once,
+          model_override: model_override === null ? null : model_override,
+          pre_command: f.pre_command || null,
+          delivery_ctx: delivery_ctx,
+        };
+        return payload;
+      }
+      return {
+        name: f.name,
+        prompt: f.prompt,
+        schedule: schedule,
+        scope: scope,
+        enabled: f.enabled,
+        run_once: f.run_once,
+        model_override: model_override,
+        pre_command: f.pre_command || null,
+        delivery_ctx: delivery_ctx,
+      };
+    },
+
+    async save() {
+      this.formError = '';
+      try {
+        const isUpdate = !!this.form.id;
+        const payload = this._buildPayload(isUpdate);
+        const url = isUpdate ? '/admin/api/cron/' + this.form.id : '/admin/api/cron';
+        const method = isUpdate ? 'PUT' : 'POST';
+        const r = await fetch(url, {
+          method,
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!r.ok) {
+          const data = await r.json().catch(() => ({}));
+          throw new Error(data.error || ('HTTP ' + r.status));
+        }
+        this.editing = false;
+        await this.load();
+      } catch (e) {
+        this.formError = String(e.message || e);
+      }
+    },
+
+    async toggleEnabled(job) {
+      try {
+        const r = await fetch('/admin/api/cron/' + job.id, {
+          method: 'PUT',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: !job.enabled }),
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        await this.load();
+      } catch (e) {
+        this.error = String(e);
+      }
+    },
+
+    askRemove(job) {
+      job.confirmDelete = true;
+      setTimeout(() => { job.confirmDelete = false; }, 4000);
+    },
+
+    async remove(job) {
+      try {
+        const r = await fetch('/admin/api/cron/' + job.id, {
+          method: 'DELETE',
+          credentials: 'same-origin',
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        await this.load();
+      } catch (e) {
+        this.error = String(e);
+      }
+    },
+
+    humanSchedule(s) {
+      if (!s) return '?';
+      if (s.interval_secs) return 'every ' + humanDur(s.interval_secs);
+      if (s.cron_expr) return cronHuman(s.cron_expr) + (s.cron_tz ? ' · ' + s.cron_tz : ' · UTC');
+      return '?';
+    },
+    schedRaw(s) {
+      if (!s || !s.cron_expr) return '';
+      return cronHuman(s.cron_expr) === s.cron_expr ? '' : s.cron_expr;
+    },
+    formatModel(m) {
+      if (!m) return '';
+      if (typeof m === 'string') return m;
+      return m.provider + '/' + m.id;
+    },
+    fmtTs(ts) {
+      if (!ts) return '-';
+      try {
+        return new Date(ts).toLocaleString('de-DE');
+      } catch (e) { return ts; }
+    },
+  };
+}
+</script>
+<script>
+(() => {
+  const KEYMAP = { m: '/admin', r: '/admin/relations', c: '/admin/cron', s: '/admin/sessions', v: '/admin/voice' };
+  const NAV = [
+    ['memory', '/admin'], ['relations', '/admin/relations'], ['cron', '/admin/cron'],
+    ['sessions', '/admin/sessions'], ['voice', '/admin/voice'],
+  ];
+  window.crabgentActions = [
+    { label: 'new cron job', run: () => { const b = document.querySelector('button.create'); if (b) b.click(); } },
+  ];
+  const pal = document.getElementById('cgPalette');
+  const input = document.getElementById('cgPaletteInput');
+  const list = document.getElementById('cgPaletteList');
+  const cheat = document.getElementById('cgCheat');
+  let items = [];
+  let sel = 0;
+  let goPending = 0;
+
+  function actions() {
+    return NAV.map(([label, href]) => ({ label: 'go to ' + label, run: () => { location.href = href; } }))
+      .concat([{ label: 'focus search', run: focusSearch }])
+      .concat(window.crabgentActions || []);
+  }
+  function focusSearch() {
+    const el = document.querySelector('.filterbar input[type="text"], #manualText');
+    if (el) { el.focus(); if (el.select) el.select(); }
+  }
+  function render() {
+    const q = input.value.toLowerCase();
+    items = actions().filter(a => a.label.toLowerCase().includes(q));
+    if (sel >= items.length) sel = Math.max(0, items.length - 1);
+    list.textContent = '';
+    if (!items.length) {
+      const div = document.createElement('div');
+      div.className = 'palette-empty';
+      div.textContent = 'no match';
+      list.appendChild(div);
+      return;
+    }
+    items.forEach((a, i) => {
+      const div = document.createElement('div');
+      div.className = 'palette-item' + (i === sel ? ' sel' : '');
+      div.textContent = a.label;
+      div.addEventListener('click', () => { closeAll(); a.run(); });
+      list.appendChild(div);
+    });
+  }
+  function openPal() { pal.hidden = false; input.value = ''; sel = 0; render(); input.focus(); }
+  function closeAll() { pal.hidden = true; cheat.hidden = true; }
+  input.addEventListener('input', () => { sel = 0; render(); });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(items.length - 1, sel + 1); render(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); render(); }
+    else if (e.key === 'Enter') { const a = items[sel]; if (a) { closeAll(); a.run(); } }
+  });
+  pal.addEventListener('click', (e) => { if (e.target === pal) closeAll(); });
+  cheat.addEventListener('click', (e) => { if (e.target === cheat) closeAll(); });
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      if (pal.hidden) openPal(); else closeAll();
+      return;
+    }
+    if (e.key === 'Escape') { closeAll(); return; }
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    if (e.key === '/') { e.preventDefault(); focusSearch(); return; }
+    if (e.key === '?') { cheat.hidden = !cheat.hidden; return; }
+    if (e.key === 'g') { goPending = Date.now(); return; }
+    if (goPending && Date.now() - goPending < 900 && KEYMAP[e.key]) { location.href = KEYMAP[e.key]; }
+    goPending = 0;
+  });
+})();
+</script>
+</body>
+</html>

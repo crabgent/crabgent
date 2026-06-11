@@ -1,0 +1,37 @@
+[package]
+name = "crabgent-channel-telegram"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Telegram bot adapter for crabgent channels (Direct-only, Long-Polling). Pure reqwest+serde, no teloxide."
+
+[dependencies]
+crabgent-channel.workspace = true
+crabgent-command.workspace = true
+crabgent-core.workspace = true
+crabgent-thinking.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+bytes.workspace = true
+reqwest = { workspace = true, features = ["multipart"] }
+secrecy.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+crabgent-log.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "time"] }
+httpmock.workspace = true
+crabgent-store.workspace = true
+crabgent-test-support.workspace = true
+tracing-test.workspace = true
+tempfile = "3"
+
+[lints]
+workspace = true

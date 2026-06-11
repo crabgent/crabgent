@@ -1,0 +1,42 @@
+[package]
+name = "crabgent-examples"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Runnable examples for the crabgent kernel"
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-channel.workspace = true
+crabgent-channel-slack.workspace = true
+crabgent-hook-inject = { path = "../crabgent-hook-inject" }
+async-trait.workspace = true
+futures.workspace = true
+secrecy.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "io-util", "io-std", "time", "sync"] }
+tokio-util.workspace = true
+
+[[bin]]
+name = "repl-min"
+path = "src/bin/repl_min.rs"
+
+[[bin]]
+name = "repl-stream"
+path = "src/bin/repl_stream.rs"
+
+[[bin]]
+name = "inject-demo"
+path = "src/bin/inject_demo.rs"
+
+[[bin]]
+name = "custom-tool"
+path = "src/bin/custom_tool.rs"

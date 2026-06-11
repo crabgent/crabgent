@@ -1,0 +1,39 @@
+[package]
+name = "crabgent-channel-matrix"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Matrix bot adapter for crabgent channels (Group + Direct, Sync-Loop, Threading, no E2EE)"
+
+[dependencies]
+crabgent-channel.workspace = true
+crabgent-command.workspace = true
+crabgent-core.workspace = true
+crabgent-thinking.workspace = true
+matrix-sdk.workspace = true
+mime = "0.3.17"
+mime_guess = "2.0.5"
+async-trait.workspace = true
+chrono.workspace = true
+reqwest.workspace = true
+bytes.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+secrecy.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+url.workspace = true
+crabgent-log.workspace = true
+
+[dev-dependencies]
+testcontainers = "0.27"
+httpmock.workspace = true
+crabgent-store.workspace = true
+crabgent-test-support.workspace = true
+
+[lints]
+workspace = true

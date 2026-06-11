@@ -1,0 +1,30 @@
+[package]
+name = "crabgent-store-sqlite"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "SQLite-backed crabgent-store implementation (sessions, tasks, cron jobs, tool cache)."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+crabgent-store.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+serde_json.workspace = true
+sqlite-vec.workspace = true
+libsqlite3-sys.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true }
+crabgent-log.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+proptest = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }

@@ -1,0 +1,25 @@
+[package]
+name = "crabgent-log"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Thin logging wrapper for crabgent"
+
+[lints]
+workspace = true
+
+[dependencies]
+log.workspace = true
+tracing.workspace = true
+tracing-log = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
+
+[dev-dependencies]
+tracing-subscriber.workspace = true
+
+[features]
+default = []
+subscriber = ["dep:tracing-log", "dep:tracing-subscriber"]

@@ -1,0 +1,21 @@
+[package]
+name = "crabgent-prosody"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Prosody domain: derive VoiceSignals from an SttResponse and render a trust-fenced <voice/> tag into user transcript messages via ProsodyHook."
+
+[lints]
+workspace = true
+
+[dependencies]
+crabgent-core.workspace = true
+async-trait.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }
+proptest.workspace = true
