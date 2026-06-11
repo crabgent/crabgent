@@ -147,12 +147,18 @@ fn build_hosted_image_response(
     usage: Option<RawUsage>,
     req: &ImageGenerationRequest,
 ) -> Result<ImageGenerationResponse, ImageGenerationError> {
+    // The Codex backend used to mark the final `output_item.done` call as
+    // "completed" but now leaves it at "generating" even though `result`
+    // already carries the finished image, so both statuses count as done.
+    // Partial frames never reach this filter: they arrive as
+    // `response.image_generation_call.partial_image` events, which the
+    // collectors above do not treat as image calls.
     let images = calls
         .into_iter()
         .filter(|call| {
             call.status
                 .as_deref()
-                .is_none_or(|status| status == "completed")
+                .is_none_or(|status| status == "completed" || status == "generating")
         })
         .map(parse_hosted_image_call)
         .collect::<Result<Vec<_>, _>>()?;

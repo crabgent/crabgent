@@ -11,7 +11,7 @@
 /local.toml
 /launchd/de.crabgent-leo.*.plist
 /secrets.md
-/nuc-now.sqlite.bak-*
+/remote-now.sqlite.bak-*
 /config.toml.bak-*
 /local.toml.bak-*
 *.sqlite
@@ -23,7 +23,7 @@
 
 # Local migration and homelab notes from private deployments.
 /docs/matrix-scope-demo.md
-/docs/nuc-deploy.md
+/docs/remote-deploy.md
 /docs/stt-tts-lab-benchmark.md
 /src/bin/matrix_scope_demo.rs
 /scripts/backfill_*.py

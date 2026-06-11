@@ -161,6 +161,38 @@ async fn codex_oauth_uses_hosted_image_generation_tool() {
 }
 
 #[tokio::test]
+async fn hosted_image_call_with_generating_status_counts_as_done() {
+    let mut server = mockito::Server::new_async().await;
+    let png = BASE64_STANDARD.encode(png_header());
+    let run_ctx = ctx();
+    let mock = server
+        .mock("POST", "/backend-api/codex/responses")
+        .with_status(200)
+        .with_body(format!(
+            "data: {{\"type\":\"response.output_item.done\",\"item\":{{\"type\":\"image_generation_call\",\"id\":\"ig_1\",\"status\":\"generating\",\"result\":\"{png}\"}}}}\n\
+             data: {{\"type\":\"response.completed\",\"response\":{{\"status\":\"completed\",\"usage\":{{\"input_tokens\":11,\"output_tokens\":22,\"total_tokens\":33}}}}}}\n\
+             data: [DONE]\n"
+        ))
+        .expect(1)
+        .create_async()
+        .await;
+
+    let provider = codex_provider(&server.url());
+    let response = provider
+        .generate_image(
+            ImageGenerationRequest::new(GPT_IMAGE_2, "draw a cube"),
+            &run_ctx,
+            None,
+        )
+        .await
+        .expect("image response despite generating status");
+
+    mock.assert_async().await;
+    assert_eq!(response.images.len(), 1);
+    assert_eq!(response.images[0].mime(), "image/png");
+}
+
+#[tokio::test]
 async fn image_generation_auth_failure_no_token_leak() {
     let mut server = mockito::Server::new_async().await;
     let mock = server
@@ -455,6 +487,9 @@ fn assert_hosted_image_body(request: &mockito::Request) -> bool {
     value["model"] == GPT_5_5
         && value["stream"] == true
         && value["tool_choice"] == "auto"
+        && value["instructions"]
+            .as_str()
+            .is_some_and(|instructions| !instructions.is_empty())
         && value.get("prompt").is_none()
         && value.get("n").is_none()
         && has_image_tool

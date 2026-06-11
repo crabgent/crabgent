@@ -24,6 +24,11 @@ use response::{RawImagesResponse, parse_hosted_image_response, parse_images_resp
 const ENDPOINT_PATH: &str = "/v1/images/generations";
 const HOSTED_TOOL_NAME: &str = "image_generation";
 const HOSTED_OUTPUT_FORMAT: ImageGenerationFormat = ImageGenerationFormat::Png;
+/// The Codex Responses backend rejects requests without an `instructions`
+/// field (400 "Instructions are required"), so the hosted image path sends a
+/// fixed minimal instruction string.
+const HOSTED_INSTRUCTIONS: &str =
+    "You generate images with the image_generation tool when the user asks for one.";
 const MAX_WIRE_IMAGE_BYTES: usize = GENERATED_IMAGE_MAX_BYTES * 4 / 3 + 16;
 const RESPONSE_JSON_OVERHEAD_BYTES: usize = 1024 * 1024;
 const MAX_IMAGES_PER_REQUEST: u8 = 10;
@@ -247,11 +252,15 @@ fn images_api_body(req: &ImageGenerationRequest) -> Value {
 fn hosted_image_body(req: &ImageGenerationRequest) -> Value {
     let mut body = Map::new();
     body.insert("model".to_owned(), Value::String(GPT_5_5.to_owned()));
+    body.insert(
+        "instructions".to_owned(),
+        Value::String(HOSTED_INSTRUCTIONS.to_owned()),
+    );
     body.insert("store".to_owned(), Value::Bool(false));
     body.insert("stream".to_owned(), Value::Bool(true));
     body.insert(
         "prompt_cache_key".to_owned(),
-        Value::String(prompt_cache_key("", &[HOSTED_TOOL_NAME])),
+        Value::String(prompt_cache_key(HOSTED_INSTRUCTIONS, &[HOSTED_TOOL_NAME])),
     );
     body.insert(
         "client_metadata".to_owned(),
