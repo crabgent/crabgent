@@ -1,11 +1,8 @@
 # crabgent
 
-```text
-   _~^~^~_
-\) /  o o  \ (/
-  '_   -   _'
-  / '-----' \
-```
+<p align="center">
+  <img src="docs/crabgent-avatar.png" alt="crabgent" width="240">
+</p>
 
 crabgent is a Rust framework for building LLM agents. The same kernel drives
 a single-purpose bot with one tool and no memory, and a multi-channel

@@ -1,5 +1,5 @@
 name=crabgent-source
-app_commit=8ce7990
+app_commit=b3c566c
 upstream_commit=218a7aa
-built_at=2026-06-11T22:21:17Z
+built_at=2026-06-11T22:28:37Z
 contains_binary=false
